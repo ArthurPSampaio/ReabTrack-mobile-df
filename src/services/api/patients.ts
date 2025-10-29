@@ -24,7 +24,7 @@ export async function getPaciente(id: string): Promise<PacienteDto> {
   return data as PacienteDto;
 }
 
-// ✅ NOVO: atualizar paciente (PATCH)
+// atualizar paciente (PATCH)
 export async function updatePaciente(
   id: string,
   dto: Partial<Omit<PacienteDto, 'id'>>
@@ -33,7 +33,7 @@ export async function updatePaciente(
   return (data?.data ?? data) as PacienteDto;
 }
 
-// ✅ NOVO: remover paciente
+// remover paciente
 export async function deletePaciente(id: string): Promise<void> {
   await api.delete(`/pacientes/${id}`);
 }

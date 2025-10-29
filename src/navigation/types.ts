@@ -3,7 +3,8 @@ export type RootStackParamList = {
   PatientNew: undefined;
   PatientDetail: { id: string; nome?: string };
   PlanDetail: { planId: string };
-  PlanCreate: { patientId: string }; // NOVA
+  PlanCreate: { patientId: string }; 
+  Dashboard: undefined;
 };
 
 export type PatientDetailTabParamList = {

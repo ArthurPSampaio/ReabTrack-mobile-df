@@ -1,75 +1,64 @@
+// src/services/api/agenda.ts
 import { api } from './http';
 import type { SessaoDto, StatusSessao } from '../../types/dto';
 
-// Lista com filtros (from/to ISO, pacienteId, status)
-export async function listAgenda(params: {
+export async function listAgenda(params?: {
   from?: string;
   to?: string;
   pacienteId?: string;
   status?: StatusSessao;
 }): Promise<SessaoDto[]> {
   const { data } = await api.get('/agenda', { params });
-  // Nest devolve a entidade; normalizamos para o shape do front
-  const arr = Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : []);
-  return arr.map((s: any) => ({
-    id: s.id,
-    inicio: s.inicio,
-    fim: s.fim,
-    status: s.status,
-    local: s.local,
-    observacoes: s.observacoes,
-    pacienteId: s.paciente?.id ?? s.pacienteId,
-    planoId: s.plano?.id ?? s.planoId,
-  }));
+  // backend retorna array direto
+  return Array.isArray(data) ? (data as SessaoDto[]) : [];
 }
 
-// Cria sessão: POST /agenda
-export async function createSessao(payload: {
-  inicio: string;         // ISO ex.: '2025-10-12T14:30:00.000Z'
-  fim: string;            // ISO
+// helpers de data (local → ISO)
+function startOfDayISO(d: Date) {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x.toISOString();
+}
+function endOfDayISO(d: Date) {
+  const x = new Date(d);
+  x.setHours(23, 59, 59, 999);
+  return x.toISOString();
+}
+
+/** Lista sessões entre hoje e hoje+7d */
+export async function listAgendaRange(daysAhead = 7): Promise<SessaoDto[]> {
+  const today = new Date();
+  const end = new Date();
+  end.setDate(today.getDate() + daysAhead);
+
+  return listAgenda({
+    from: startOfDayISO(today),
+    to: endOfDayISO(end),
+  });
+}
+
+export async function createSessao(dto: {
+  inicio: string;
+  fim: string;
   pacienteId: string;
   planoId: string;
   local?: string;
   observacoes?: string;
 }): Promise<SessaoDto> {
-  const { data } = await api.post('/agenda', payload);
-  const s = data?.data ?? data;
-  return {
-    id: s.id,
-    inicio: s.inicio,
-    fim: s.fim,
-    status: s.status,
-    local: s.local,
-    observacoes: s.observacoes,
-    pacienteId: s.paciente?.id ?? s.pacienteId,
-    planoId: s.plano?.id ?? s.planoId,
-  };
+  const { data } = await api.post('/agenda', dto);
+  return data;
 }
 
-// Atualiza sessão: PATCH /agenda/:id
-export async function updateSessao(id: string, dto: Partial<{
-  inicio: string;
-  fim: string;
-  planoId: string;
-  local: string;
-  observacoes: string;
-  status: StatusSessao;
-}>): Promise<SessaoDto> {
-  const { data } = await api.patch(`/agenda/${id}`, dto);
-  const s = data?.data ?? data;
-  return {
-    id: s.id,
-    inicio: s.inicio,
-    fim: s.fim,
-    status: s.status,
-    local: s.local,
-    observacoes: s.observacoes,
-    pacienteId: s.paciente?.id ?? s.pacienteId,
-    planoId: s.plano?.id ?? s.planoId,
-  };
+export async function updateSessao(
+  sessaoId: string,
+  dto: Partial<Pick<SessaoDto, 'inicio' | 'fim' | 'local' | 'observacoes' | 'status'>> & {
+    planoId?: string;
+  }
+): Promise<SessaoDto> {
+  const { data } = await api.patch(`/agenda/${sessaoId}`, dto);
+  return data;
 }
 
-// Remove: DELETE /agenda/:id
-export async function deleteSessao(id: string): Promise<void> {
-  await api.delete(`/agenda/${id}`);
+export async function deleteSessao(sessaoId: string): Promise<void> {
+  await api.delete(`/agenda/${sessaoId}`);
 }
