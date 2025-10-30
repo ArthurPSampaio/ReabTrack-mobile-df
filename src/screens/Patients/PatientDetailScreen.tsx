@@ -37,14 +37,9 @@ export default function PatientDetailScreen({ route }: Props) {
     );
   }
 
-  // Agora o header vem de dentro do PatientDetailTabs; não precisa header aqui.
   return (
     <View style={{ flex: 1 }}>
-      <PatientDetailTabs
-        id={id}
-        nome={data.nome}
-        diagnostico={data.diagnostico}
-      />
+      <PatientDetailTabs id={id} nome={data.nome} diagnostico={data.diagnostico} />
     </View>
   );
 }

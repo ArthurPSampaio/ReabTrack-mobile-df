@@ -1,14 +1,13 @@
 import axios from 'axios';
 
 export const api = axios.create({
-  baseURL: process.env.EXPO_PUBLIC_API_URL, // ex.: seu ngrok
-  timeout: 15000,
+  baseURL: process.env.EXPO_PUBLIC_API_URL,
+  timeout: 15_000,
 });
 
 api.interceptors.response.use(
-  (res) => res,
-  (err) => {
-    // log útil para depurar
+  res => res,
+  err => {
     console.log('[API ERROR]', {
       baseURL: err?.config?.baseURL,
       url: err?.config?.url,

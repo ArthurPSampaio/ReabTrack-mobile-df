@@ -1,7 +1,6 @@
 import { api } from './http';
 import type { RegistroDto } from '../../types/dto';
 
-// Normaliza a entidade vinda do backend (que retorna paciente/plano eager)
 const normalize = (r: any): RegistroDto => ({
   id: r.id,
   dataSessao: r.dataSessao,
@@ -16,14 +15,12 @@ const normalize = (r: any): RegistroDto => ({
   planoId: r.plano?.id ?? r.planoId,
 });
 
-// GET /registros/por-paciente/:pacienteId
 export async function listRegistrosByPaciente(pacienteId: string): Promise<RegistroDto[]> {
   const { data } = await api.get(`/registros/por-paciente/${pacienteId}`);
-  const arr = Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : []);
+  const arr = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
   return arr.map(normalize);
 }
 
-// POST /registros
 export async function createRegistro(payload: {
   pacienteId: string;
   planoId: string;
@@ -40,13 +37,14 @@ export async function createRegistro(payload: {
   return normalize(data?.data ?? data);
 }
 
-// PATCH /registros/:id
-export async function updateRegistro(id: string, dto: Partial<RegistroDto> & { planoId?: string }): Promise<RegistroDto> {
+export async function updateRegistro(
+  id: string,
+  dto: Partial<RegistroDto> & { planoId?: string }
+): Promise<RegistroDto> {
   const { data } = await api.patch(`/registros/${id}`, dto);
   return normalize(data?.data ?? data);
 }
 
-// DELETE /registros/:id
 export async function deleteRegistro(id: string): Promise<void> {
   await api.delete(`/registros/${id}`);
 }

@@ -1,4 +1,3 @@
-// src/screens/Patients/DashboardScreen.tsx
 import React, { useMemo, useCallback } from 'react';
 import { View, Text, FlatList, TouchableOpacity } from 'react-native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -29,8 +28,8 @@ const STATUS_LABEL: Record<StatusSessao, string> = {
 function formatHourRange(inicioISO: string, fimISO: string) {
   const i = new Date(inicioISO);
   const f = new Date(fimISO);
-  const ok = !isNaN(i.getTime()) && !isNaN(f.getTime());
-  if (!ok) return `${inicioISO} → ${fimISO}`;
+  const valid = !isNaN(i.getTime()) && !isNaN(f.getTime());
+  if (!valid) return `${inicioISO} → ${fimISO}`;
   const h = (d: Date) =>
     d.toLocaleTimeString([], {
       hour: '2-digit',
@@ -39,23 +38,21 @@ function formatHourRange(inicioISO: string, fimISO: string) {
   return `${h(i)} → ${h(f)}`;
 }
 
-/** Agrupa por dia **local** (YYYY-MM-DD derivado de Date local) */
 function groupByDayLocal(items: SessaoDto[]) {
   type Bucket = { key: string; y: number; m: number; d: number; items: SessaoDto[] };
   const map = new Map<string, Bucket>();
 
   for (const s of items) {
-    const dt = new Date(s.inicio); // Date da sessão em horário local do usuário
+    const dt = new Date(s.inicio);
     const y = dt.getFullYear();
-    const m = dt.getMonth();   // 0..11
-    const d = dt.getDate();    // 1..31
+    const m = dt.getMonth();
+    const d = dt.getDate();
     const key = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 
     if (!map.has(key)) map.set(key, { key, y, m, d, items: [] });
     map.get(key)!.items.push(s);
   }
 
-  // Ordena por data
   return Array.from(map.values()).sort((a, b) => {
     if (a.y !== b.y) return a.y - b.y;
     if (a.m !== b.m) return a.m - b.m;
@@ -63,12 +60,10 @@ function groupByDayLocal(items: SessaoDto[]) {
   });
 }
 
-/** Rótulo HOJE/AMANHÃ considerando meia-noite **local** */
 function formatDayLabelLocal(y: number, m: number, d: number) {
   const hoje = new Date();
-  const startHoje = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()); // 00:00 local
-
-  const alvo = new Date(y, m, d); // 00:00 local do dia alvo
+  const startHoje = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+  const alvo = new Date(y, m, d);
   const diffDays = Math.round((alvo.getTime() - startHoje.getTime()) / 86400000);
 
   if (diffDays === 0) return 'Hoje';
@@ -79,20 +74,17 @@ function formatDayLabelLocal(y: number, m: number, d: number) {
 export default function DashboardScreen({ navigation }: Props) {
   const qc = useQueryClient();
 
-  // Pacientes recentes
   const pacientesQ = useQuery({
     queryKey: ['pacientes', 'dashboard'],
     queryFn: () => listPacientes(),
   });
   const recentes = (pacientesQ.data || []).slice(0, 5);
 
-  // Próximas sessões (7 dias)
   const agendaQ = useQuery({
     queryKey: ['agenda', 'next7'],
     queryFn: () => listAgendaRange(7),
   });
 
-  // Refetch automático ao ganhar foco
   useFocusEffect(
     useCallback(() => {
       agendaQ.refetch();
@@ -103,8 +95,7 @@ export default function DashboardScreen({ navigation }: Props) {
   const grouped = useMemo(() => groupByDayLocal(agendaQ.data || []), [agendaQ.data]);
 
   const updSessaoMut = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: StatusSessao }) =>
-      updateSessao(id, { status }),
+    mutationFn: ({ id, status }: { id: string; status: StatusSessao }) => updateSessao(id, { status }),
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ['agenda', 'next7'] });
     },
@@ -112,7 +103,6 @@ export default function DashboardScreen({ navigation }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface }}>
-      {/* Header */}
       <View
         style={{
           paddingHorizontal: 16,
@@ -133,7 +123,6 @@ export default function DashboardScreen({ navigation }: Props) {
         contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 24 }}
         renderItem={() => (
           <View style={{ gap: 12 }}>
-            {/* Ações rápidas */}
             <Card style={{ gap: 10 }}>
               <Text style={[typography.h2]}>Ações rápidas</Text>
               <View style={{ flexDirection: 'row', gap: 10 }}>
@@ -151,7 +140,6 @@ export default function DashboardScreen({ navigation }: Props) {
               </View>
             </Card>
 
-            {/* Próximas sessões (7 dias) */}
             <Card style={{ gap: 10 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <MaterialCommunityIcons name="calendar-clock" size={18} color={colors.text} />
@@ -169,6 +157,7 @@ export default function DashboardScreen({ navigation }: Props) {
                     return (
                       <View key={key} style={{ gap: 8 }}>
                         <Text style={{ fontWeight: '700', color: colors.brown }}>{label}</Text>
+
                         {items.map((s) => {
                           const hour = formatHourRange(s.inicio, s.fim);
                           const pacienteNome = (s as any)?.paciente?.nome;
@@ -194,6 +183,7 @@ export default function DashboardScreen({ navigation }: Props) {
                                 }}
                               >
                                 <Text style={{ fontWeight: '700' }}>{hour}</Text>
+
                                 <View
                                   style={{
                                     paddingHorizontal: 10,
@@ -241,9 +231,7 @@ export default function DashboardScreen({ navigation }: Props) {
                                   {pacienteNome}
                                 </Text>
                               )}
-                              <Text style={{ ...typography.muted }}>
-                                {s.local ? s.local : 'Sem local'}
-                              </Text>
+                              <Text style={{ ...typography.muted }}>{s.local || 'Sem local'}</Text>
 
                               <View style={{ flexDirection: 'row', gap: 8, marginTop: 6 }}>
                                 <Button
@@ -275,7 +263,6 @@ export default function DashboardScreen({ navigation }: Props) {
               )}
             </Card>
 
-            {/* Pacientes recentes */}
             <Card style={{ gap: 10 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <MaterialCommunityIcons name="account-group" size={18} color={colors.text} />
@@ -309,6 +296,7 @@ export default function DashboardScreen({ navigation }: Props) {
                       )}
                     </TouchableOpacity>
                   ))}
+
                   <View style={{ marginTop: 6 }}>
                     <Button
                       title="Ver todos"

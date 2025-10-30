@@ -3,7 +3,7 @@ export type RootStackParamList = {
   PatientNew: undefined;
   PatientDetail: { id: string; nome?: string };
   PlanDetail: { planId: string };
-  PlanCreate: { patientId: string }; 
+  PlanCreate: { patientId: string };
   Dashboard: undefined;
 };
 

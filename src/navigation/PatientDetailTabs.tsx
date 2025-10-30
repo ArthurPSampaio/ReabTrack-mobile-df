@@ -34,7 +34,6 @@ type HeaderProps = {
   onDelete?: () => void;
 };
 
-/** Header com SafeArea e ações à direita */
 function PatientHeader({ title, subtitle, onEdit, onDelete }: HeaderProps) {
   const navigation = useNavigation();
 
@@ -48,7 +47,6 @@ function PatientHeader({ title, subtitle, onEdit, onDelete }: HeaderProps) {
       }}
     >
       <View style={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: 14, gap: 10 }}>
-        {/* Linha de topo: Voltar (esq) e ações (dir) */}
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <TouchableOpacity
             onPress={() => navigation.goBack()}
@@ -66,7 +64,6 @@ function PatientHeader({ title, subtitle, onEdit, onDelete }: HeaderProps) {
 
           <View style={{ flex: 1 }} />
 
-          {/* Ações */}
           {!!onEdit && (
             <TouchableOpacity
               onPress={onEdit}
@@ -104,7 +101,6 @@ function PatientHeader({ title, subtitle, onEdit, onDelete }: HeaderProps) {
           )}
         </View>
 
-        {/* Título e subtítulo */}
         <View style={{ gap: 2 }}>
           <Text style={[typography.h1]} numberOfLines={1}>
             {title}
@@ -124,7 +120,6 @@ export default function PatientDetailTabs({ id, nome, diagnostico }: Props) {
   const navigation = useNavigation();
   const qc = useQueryClient();
 
-  // ====== Modal de edição ======
   const [editOpen, setEditOpen] = useState(false);
   const [form, setForm] = useState<{
     nome?: string;
@@ -141,13 +136,14 @@ export default function PatientDetailTabs({ id, nome, diagnostico }: Props) {
     setForm((s) => ({ ...s, [k]: v }));
 
   const updMut = useMutation({
-    mutationFn: () => updatePaciente(id, {
-      nome: form.nome?.toString().trim(),
-      idade: typeof form.idade === 'number' ? form.idade : undefined,
-      genero: form.genero?.toString(),
-      diagnostico: form.diagnostico?.toString(),
-      sintomas: form.sintomas?.toString(),
-    }),
+    mutationFn: () =>
+      updatePaciente(id, {
+        nome: form.nome?.toString().trim(),
+        idade: typeof form.idade === 'number' ? form.idade : undefined,
+        genero: form.genero?.toString(),
+        diagnostico: form.diagnostico?.toString(),
+        sintomas: form.sintomas?.toString(),
+      }),
     onSuccess: async () => {
       setEditOpen(false);
       await qc.invalidateQueries({ queryKey: ['paciente', id] });
@@ -214,7 +210,6 @@ export default function PatientDetailTabs({ id, nome, diagnostico }: Props) {
               paddingTop: 6,
             },
             tabBarLabelStyle: { fontSize: 12 },
-
             tabBarIcon: ({ color, size }) => {
               const s = size ?? 22;
               switch (route.name) {
@@ -260,7 +255,6 @@ export default function PatientDetailTabs({ id, nome, diagnostico }: Props) {
         </Tabs.Navigator>
       </View>
 
-      {/* ===== Modal de Edição ===== */}
       <Modal
         visible={editOpen}
         transparent

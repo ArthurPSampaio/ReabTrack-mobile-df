@@ -1,5 +1,5 @@
 export type PacienteDto = {
-  id: string;              
+  id: string;
   nome: string;
   idade: number;
   genero: string;
@@ -9,10 +9,14 @@ export type PacienteDto = {
 
 export type Paginated<T> = {
   data: T[];
-  meta: { total: number; page: number; limit: number; pages: number };
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  };
 };
 
-// status conforme o backend (com acento e maiúsculas)
 export type StatusPlano = 'Ativo' | 'Concluído' | 'Cancelado';
 
 export type PlanoDto = {
@@ -21,15 +25,18 @@ export type PlanoDto = {
   diagnosticoRelacionado: string;
   status: StatusPlano;
   pacienteId: string;
-  // campos que podem existir no backend (sem travar o front):
   nome?: string;
   dataInicio?: string;
   dataFimPrevista?: string;
   atividades?: AtividadeDto[];
 };
 
-// modelamos atividade desde já (vamos plugar depois)
-export type TipoAtividade = 'Fortalecimento' | 'Alongamento' | 'Aeróbico' | 'Equilíbrio' | 'Outro';
+export type TipoAtividade =
+  | 'Fortalecimento'
+  | 'Alongamento'
+  | 'Aeróbico'
+  | 'Equilíbrio'
+  | 'Outro';
 
 export type AtividadeDto = {
   id?: string;
@@ -47,25 +54,25 @@ export type StatusSessao = 'scheduled' | 'completed' | 'canceled' | 'no_show';
 
 export type SessaoDto = {
   id: string;
-  inicio: string;        // ISO string
-  fim: string;           // ISO string
+  inicio: string;
+  fim: string;
   status: StatusSessao;
   local?: string;
   observacoes?: string;
-  pacienteId: string;    // derivado do eager no backend; expomos como string no front
-  planoId: string;       // obrigatório no create
+  pacienteId: string;
+  planoId: string;
 };
 
 export type RegistroDto = {
   id: string;
-  dataSessao: string;        // ISO
-  escalaDor?: number;        // 0..10
-  percepcaoEsforco?: number; // 0..10
+  dataSessao: string;
+  escalaDor?: number;
+  percepcaoEsforco?: number;
   conseguiuRealizarTudo?: boolean;
   notasSubjetivas?: string;
   notasObjetivas?: string;
   avaliacao?: string;
   planoProximaSessao?: string;
-  pacienteId: string;        // mapeado do eager
-  planoId: string;           // requerido no backend
+  pacienteId: string;
+  planoId: string;
 };
