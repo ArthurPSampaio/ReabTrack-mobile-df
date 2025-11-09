@@ -8,6 +8,8 @@ import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import { typography } from '../../theme/tokens';
 import { colors } from '../../theme/colors';
+import { generateReport } from '../../services/api/reports';
+import type { SummarizeResponse } from '../../services/api/reports';
 
 type Props = BottomTabScreenProps<PatientDetailTabParamList, 'Report'>;
 
@@ -56,14 +58,12 @@ export default function PatientReportTab({ route }: Props) {
   const [reportText, setReportText] = useState<string | null>(null);
 
   const iaMut = useMutation({
-    mutationFn: async () => {
-      await new Promise(r => setTimeout(r, 800));
-      const base = resumoLocal.replace(/\n/g, ' ');
-      return `Relatório gerado:\n${base}`;
+    mutationFn: () => generateReport({ pacienteId: id }),
+    onSuccess: (data: SummarizeResponse) => { // <-- Recebe 'data' (o objeto)
+      setReportText(data.texto); // <-- Pega o .texto de dentro do objeto
     },
-    onSuccess: (txt: string) => setReportText(txt),
     onError: (e: any) => {
-      const msg = e?.message || 'Falha ao gerar relatório';
+      const msg = e?.response?.data?.message || e?.message || 'Falha ao gerar relatório';
       Alert.alert('Erro', msg);
     },
   });
