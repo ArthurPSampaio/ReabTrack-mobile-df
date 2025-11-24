@@ -3,13 +3,14 @@ import { View, Text, FlatList, TouchableOpacity } from 'react-native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { listPacientes } from '../../services/api/patients';
 import { listAgendaRange, updateSessao } from '../../services/api/agenda';
 
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
-import { typography } from '../../theme/tokens';
+import { typography, spacing } from '../../theme/tokens';
 import { colors } from '../../theme/colors';
 
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -103,60 +104,62 @@ export default function DashboardScreen({ navigation }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface }}>
-      <View
+      <SafeAreaView
+        edges={['top']}
         style={{
-          paddingHorizontal: 16,
-          paddingTop: 8,
-          paddingBottom: 12,
+          paddingHorizontal: spacing(2),
+          paddingTop: spacing(1),
+          paddingBottom: spacing(1.5),
           borderBottomWidth: 1,
           borderBottomColor: colors.line,
           gap: 4,
+          backgroundColor: colors.background,
         }}
       >
         <Text style={[typography.h1]}>Início</Text>
-        <Text style={{ ...typography.muted }}>Atalhos e visão rápida para começar o dia.</Text>
-      </View>
+        <Text style={typography.small}>Atalhos e visão rápida para começar o dia.</Text>
+      </SafeAreaView>
 
       <FlatList
         data={[{ key: 'conteudo' }]}
         keyExtractor={(i) => i.key}
-        contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 24 }}
+        contentContainerStyle={{ padding: spacing(2), gap: spacing(1.5), paddingBottom: spacing(3) }}
         renderItem={() => (
-          <View style={{ gap: 12 }}>
-            <Card style={{ gap: 10 }}>
+          <View style={{ gap: spacing(1.5) }}>
+            <Card style={{ gap: spacing(1.25) }}>
               <Text style={[typography.h2]}>Ações rápidas</Text>
-              <View style={{ flexDirection: 'row', gap: 10 }}>
+              <View style={{ flexDirection: 'row', gap: spacing(1.25) }}>
                 <Button
                   title="Novo paciente"
                   onPress={() => navigation.navigate('PatientNew')}
-                  style={{ flex: 1, paddingVertical: 12 }}
+                  style={{ flex: 1 }}
                 />
                 <Button
                   title="Ver pacientes"
                   variant="outline"
                   onPress={() => navigation.navigate('PatientsList')}
-                  style={{ flex: 1, paddingVertical: 12 }}
+                  style={{ flex: 1 }}
                 />
               </View>
             </Card>
 
-            <Card style={{ gap: 10 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <MaterialCommunityIcons name="calendar-clock" size={18} color={colors.text} />
+            <Card style={{ gap: spacing(1.25) }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing(1) }}>
+                <MaterialCommunityIcons name="calendar-clock" size={20} color={colors.text} />
                 <Text style={[typography.h2]}>Próximas sessões (7 dias)</Text>
               </View>
 
               {agendaQ.isLoading ? (
-                <Text style={typography.muted}>Carregando…</Text>
+                <Text style={typography.small}>Carregando…</Text>
               ) : (agendaQ.data || []).length === 0 ? (
-                <Text style={typography.muted}>Sem sessões neste período.</Text>
+                <Text style={typography.small}>Sem sessões neste período.</Text>
               ) : (
-                <View style={{ gap: 14 }}>
+                <View style={{ gap: spacing(1.75) }}>
                   {grouped.map(({ key, y, m, d, items }) => {
                     const label = formatDayLabelLocal(y, m, d);
                     return (
-                      <View key={key} style={{ gap: 8 }}>
-                        <Text style={{ fontWeight: '700', color: colors.brown }}>{label}</Text>
+                      <View key={key} style={{ gap: spacing(1) }}>
+                        <Text style={{ fontWeight: '700', color: colors.primaryDark, fontSize: 16 }}>{label}</Text>
 
                         {items.map((s) => {
                           const hour = formatHourRange(s.inicio, s.fim);
@@ -170,9 +173,9 @@ export default function DashboardScreen({ navigation }: Props) {
                                 borderWidth: 1,
                                 borderColor: colors.line,
                                 borderRadius: 12,
-                                padding: 10,
-                                backgroundColor: '#fff',
-                                gap: 6,
+                                padding: spacing(1.25),
+                                backgroundColor: colors.background,
+                                gap: spacing(0.75),
                               }}
                             >
                               <View
@@ -182,42 +185,34 @@ export default function DashboardScreen({ navigation }: Props) {
                                   justifyContent: 'space-between',
                                 }}
                               >
-                                <Text style={{ fontWeight: '700' }}>{hour}</Text>
+                                <Text style={typography.h3}>{hour}</Text>
 
                                 <View
                                   style={{
                                     paddingHorizontal: 10,
                                     paddingVertical: 4,
                                     borderRadius: 999,
-                                    borderWidth: 1,
-                                    borderColor:
+                                    backgroundColor:
                                       s.status === 'scheduled'
                                         ? colors.line
                                         : s.status === 'completed'
-                                        ? '#8BC34A'
+                                        ? '#E4F4EC'
                                         : s.status === 'canceled'
-                                        ? '#F44336'
-                                        : '#FF9800',
-                                    backgroundColor:
-                                      s.status === 'scheduled'
-                                        ? '#fff'
-                                        : s.status === 'completed'
-                                        ? '#E8F5E9'
-                                        : s.status === 'canceled'
-                                        ? '#FDECEA'
+                                        ? '#FBEAEB'
                                         : '#FFF3E0',
                                   }}
                                 >
                                   <Text
                                     style={{
                                       fontSize: 12,
+                                      fontWeight: '600',
                                       color:
                                         s.status === 'scheduled'
-                                          ? colors.text
+                                          ? colors.textMuted
                                           : s.status === 'completed'
-                                          ? '#2E7D32'
+                                          ? colors.success
                                           : s.status === 'canceled'
-                                          ? '#B71C1C'
+                                          ? colors.danger
                                           : '#E65100',
                                     }}
                                   >
@@ -227,13 +222,13 @@ export default function DashboardScreen({ navigation }: Props) {
                               </View>
 
                               {!!pacienteNome && (
-                                <Text style={{ ...typography.muted }} numberOfLines={1}>
+                                <Text style={typography.body} numberOfLines={1}>
                                   {pacienteNome}
                                 </Text>
                               )}
-                              <Text style={{ ...typography.muted }}>{s.local || 'Sem local'}</Text>
+                              <Text style={typography.small}>{s.local || 'Sem local'}</Text>
 
-                              <View style={{ flexDirection: 'row', gap: 8, marginTop: 6 }}>
+                              <View style={{ flexDirection: 'row', gap: spacing(1), marginTop: spacing(0.75) }}>
                                 <Button
                                   title="Abrir paciente"
                                   variant="outline"
@@ -243,13 +238,13 @@ export default function DashboardScreen({ navigation }: Props) {
                                       nome: pacienteNome,
                                     })
                                   }
-                                  style={{ flex: 1, paddingVertical: 10 }}
+                                  style={{ flex: 1, paddingVertical: spacing(1) }}
                                 />
                                 {s.status !== 'completed' && (
                                   <Button
                                     title="Concluir"
                                     onPress={() => updSessaoMut.mutate({ id: s.id, status: 'completed' })}
-                                    style={{ flex: 1, paddingVertical: 10 }}
+                                    style={{ flex: 1, paddingVertical: spacing(1) }}
                                   />
                                 )}
                               </View>
@@ -263,41 +258,41 @@ export default function DashboardScreen({ navigation }: Props) {
               )}
             </Card>
 
-            <Card style={{ gap: 10 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <MaterialCommunityIcons name="account-group" size={18} color={colors.text} />
+            <Card style={{ gap: spacing(1.25) }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing(1) }}>
+                <MaterialCommunityIcons name="account-group" size={20} color={colors.text} />
                 <Text style={[typography.h2]}>Pacientes recentes</Text>
               </View>
 
               {pacientesQ.isLoading ? (
-                <Text style={typography.muted}>Carregando…</Text>
+                <Text style={typography.small}>Carregando…</Text>
               ) : recentes.length === 0 ? (
-                <Text style={typography.muted}>Sem pacientes cadastrados ainda.</Text>
+                <Text style={typography.small}>Sem pacientes cadastrados ainda.</Text>
               ) : (
-                <View style={{ gap: 8 }}>
+                <View style={{ gap: spacing(1) }}>
                   {recentes.map((p) => (
                     <TouchableOpacity
                       key={p.id}
                       activeOpacity={0.8}
                       onPress={() => navigation.navigate('PatientDetail', { id: p.id, nome: p.nome })}
                       style={{
-                        paddingVertical: 8,
+                        paddingVertical: spacing(1),
                         borderBottomWidth: 1,
                         borderBottomColor: colors.line,
                       }}
                     >
-                      <Text style={{ fontWeight: '700' }} numberOfLines={1}>
+                      <Text style={typography.h3} numberOfLines={1}>
                         {p.nome}
                       </Text>
                       {!!p.diagnostico && (
-                        <Text style={{ ...typography.muted }} numberOfLines={1}>
+                        <Text style={typography.small} numberOfLines={1}>
                           {p.diagnostico}
                         </Text>
                       )}
                     </TouchableOpacity>
                   ))}
 
-                  <View style={{ marginTop: 6 }}>
+                  <View style={{ marginTop: spacing(0.75) }}>
                     <Button
                       title="Ver todos"
                       variant="outline"

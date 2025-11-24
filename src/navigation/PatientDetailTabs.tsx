@@ -13,11 +13,13 @@ import PatientReportTab from '../screens/tabs/PatientReportTab';
 
 import type { PatientDetailTabParamList } from './types';
 import { colors } from '../theme/colors';
-import { typography } from '../theme/tokens';
+import { radius, spacing, typography } from '../theme/tokens';
 
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import { updatePaciente, deletePaciente } from '../services/api/patients';
+// --- A CORREÇÃO ESTÁ AQUI ---
+import { GeneroPaciente, PacienteDto } from '../types/dto'; 
 
 const Tabs = createBottomTabNavigator<PatientDetailTabParamList>();
 
@@ -34,6 +36,45 @@ type HeaderProps = {
   onDelete?: () => void;
 };
 
+// --- 1. FUNÇÃO DA MÁSCARA DE DATA ---
+const formatarData = (text: string): string => {
+  const numeros = text.replace(/\D/g, '');
+  const truncado = numeros.slice(0, 8);
+  if (truncado.length > 4) {
+    return `${truncado.slice(0, 2)}/${truncado.slice(2, 4)}/${truncado.slice(4)}`;
+  }
+  if (truncado.length > 2) {
+    return `${truncado.slice(0, 2)}/${truncado.slice(2)}`;
+  }
+  return truncado;
+};
+
+// --- 2. FUNÇÃO DE CONVERSÃO INVERSA (AAAA-MM-DD para DD/MM/AAAA) ---
+const formatarDataParaInput = (isoDate?: string): string => {
+  if (!isoDate || !isoDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    return ''; // Retorna vazio se a data for inválida ou indefinida
+  }
+  const partes = isoDate.split('-');
+  return `${partes[2]}/${partes[1]}/${partes[0]}`;
+};
+
+const Chip = ({ label, active, onPress }: { label: string; active?: boolean; onPress?: () => void }) => (
+  <TouchableOpacity
+    onPress={onPress}
+    disabled={!onPress}
+    style={{
+      paddingHorizontal: spacing(1.5),
+      paddingVertical: spacing(1),
+      borderWidth: 1.5,
+      borderColor: active ? colors.primary : colors.line,
+      borderRadius: 999,
+      backgroundColor: active ? colors.primary : colors.background,
+    }}
+  >
+    <Text style={{ color: active ? colors.white : colors.text, fontWeight: '600', fontSize: 13 }}>{label}</Text>
+  </TouchableOpacity>
+);
+
 function PatientHeader({ title, subtitle, onEdit, onDelete }: HeaderProps) {
   const navigation = useNavigation();
 
@@ -41,25 +82,29 @@ function PatientHeader({ title, subtitle, onEdit, onDelete }: HeaderProps) {
     <SafeAreaView
       edges={['top']}
       style={{
-        backgroundColor: colors.surface,
+        backgroundColor: colors.background,
         borderBottomWidth: 1,
         borderBottomColor: colors.line,
       }}
     >
-      <View style={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: 14, gap: 10 }}>
+      <View style={{ paddingHorizontal: spacing(2), paddingTop: spacing(0.75), paddingBottom: spacing(1.75), gap: spacing(1.25) }}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <TouchableOpacity
             onPress={() => navigation.goBack()}
             style={{
-              paddingHorizontal: 12,
-              paddingVertical: 8,
+              paddingHorizontal: spacing(1.5),
+              paddingVertical: spacing(1),
               borderRadius: 999,
-              backgroundColor: '#EFE8DB',
+              backgroundColor: colors.surface,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: spacing(0.5),
             }}
             accessibilityRole="button"
             accessibilityLabel="Voltar"
           >
-            <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text }}>‹ Voltar</Text>
+            <Ionicons name="chevron-back" size={18} color={colors.text} />
+            <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text }}>Voltar</Text>
           </TouchableOpacity>
 
           <View style={{ flex: 1 }} />
@@ -68,45 +113,43 @@ function PatientHeader({ title, subtitle, onEdit, onDelete }: HeaderProps) {
             <TouchableOpacity
               onPress={onEdit}
               style={{
-                paddingHorizontal: 10,
-                paddingVertical: 8,
-                borderRadius: 10,
+                padding: spacing(1),
+                borderRadius: radius.md,
                 borderWidth: 1,
                 borderColor: colors.line,
-                backgroundColor: '#EFE8DB',
-                marginRight: 8,
+                backgroundColor: colors.surface,
+                marginRight: spacing(1),
               }}
               accessibilityRole="button"
               accessibilityLabel="Editar paciente"
             >
-              <Ionicons name="pencil" size={18} color={colors.text} />
+              <Ionicons name="pencil" size={20} color={colors.text} />
             </TouchableOpacity>
           )}
           {!!onDelete && (
             <TouchableOpacity
               onPress={onDelete}
               style={{
-                paddingHorizontal: 10,
-                paddingVertical: 8,
-                borderRadius: 10,
+                padding: spacing(1),
+                borderRadius: radius.md,
                 borderWidth: 1,
                 borderColor: colors.line,
-                backgroundColor: '#FAE4E1',
+                backgroundColor: '#FBEAEB',
               }}
               accessibilityRole="button"
               accessibilityLabel="Remover paciente"
             >
-              <Ionicons name="trash-outline" size={18} color="#A33" />
+              <Ionicons name="trash-outline" size={20} color={colors.danger} />
             </TouchableOpacity>
           )}
         </View>
 
-        <View style={{ gap: 2 }}>
+        <View style={{ gap: spacing(0.25) }}>
           <Text style={[typography.h1]} numberOfLines={1}>
             {title}
           </Text>
           {!!subtitle && (
-            <Text style={{ ...typography.muted }} numberOfLines={2}>
+            <Text style={typography.small} numberOfLines={2}>
               {subtitle}
             </Text>
           )}
@@ -121,10 +164,11 @@ export default function PatientDetailTabs({ id, nome, diagnostico }: Props) {
   const qc = useQueryClient();
 
   const [editOpen, setEditOpen] = useState(false);
+  
   const [form, setForm] = useState<{
     nome?: string;
-    idade?: number;
-    genero?: string;
+    dataNascimento?: string;
+    genero?: GeneroPaciente | null;
     diagnostico?: string;
     sintomas?: string;
   }>({
@@ -136,21 +180,34 @@ export default function PatientDetailTabs({ id, nome, diagnostico }: Props) {
     setForm((s) => ({ ...s, [k]: v }));
 
   const updMut = useMutation({
-    mutationFn: () =>
-      updatePaciente(id, {
+    mutationFn: () => {
+      let dataNascimentoISO: string | undefined = undefined;
+
+      if (form.dataNascimento && form.dataNascimento.trim()) {
+        if (!form.dataNascimento.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+          return Promise.reject(new Error('Data de nascimento inválida. Use o formato DD/MM/AAAA.'));
+        }
+        const partes = form.dataNascimento.split('/');
+        dataNascimentoISO = `${partes[2]}-${partes[1]}-${partes[0]}`;
+      } else {
+        return Promise.reject(new Error('Data de nascimento é obrigatória.'));
+      }
+
+      return updatePaciente(id, {
         nome: form.nome?.toString().trim(),
-        idade: typeof form.idade === 'number' ? form.idade : undefined,
-        genero: form.genero?.toString(),
+        dataNascimento: dataNascimentoISO,
+        genero: form.genero ?? undefined,
         diagnostico: form.diagnostico?.toString(),
         sintomas: form.sintomas?.toString(),
-      }),
+      });
+    },
     onSuccess: async () => {
       setEditOpen(false);
       await qc.invalidateQueries({ queryKey: ['paciente', id] });
       await qc.invalidateQueries({ queryKey: ['pacientes'] });
     },
     onError: (e: any) => {
-      const msg = e?.response?.data?.message?.join?.('\n') || e?.response?.data?.message || e?.message;
+      const msg = e?.message || e?.response?.data?.message?.join?.('\n') || e?.response?.data?.message;
       Alert.alert('Erro', String(msg ?? 'Falha ao salvar'));
     },
   });
@@ -169,12 +226,14 @@ export default function PatientDetailTabs({ id, nome, diagnostico }: Props) {
   });
 
   const onOpenEdit = () => {
+    const pacienteAtual = qc.getQueryData<PacienteDto>(['paciente', id]);
+    
     setForm({
-      nome: form.nome ?? nome,
-      diagnostico: form.diagnostico ?? diagnostico,
-      idade: form.idade,
-      genero: form.genero,
-      sintomas: form.sintomas,
+      nome: pacienteAtual?.nome ?? nome,
+      diagnostico: pacienteAtual?.diagnostico ?? diagnostico,
+      dataNascimento: formatarDataParaInput(pacienteAtual?.dataNascimento),
+      genero: pacienteAtual?.genero ?? null,
+      sintomas: pacienteAtual?.sintomas ?? '',
     });
     setEditOpen(true);
   };
@@ -202,16 +261,16 @@ export default function PatientDetailTabs({ id, nome, diagnostico }: Props) {
             tabBarActiveTintColor: colors.primary,
             tabBarInactiveTintColor: colors.textMuted,
             tabBarStyle: {
-              backgroundColor: colors.surface,
+              backgroundColor: colors.background,
               borderTopColor: colors.line,
               borderTopWidth: 1,
               height: 62,
-              paddingBottom: 8,
-              paddingTop: 6,
+              paddingBottom: spacing(0.75),
+              paddingTop: spacing(0.5),
             },
-            tabBarLabelStyle: { fontSize: 12 },
+            tabBarLabelStyle: { fontSize: 12, fontWeight: '600' },
             tabBarIcon: ({ color, size }) => {
-              const s = size ?? 22;
+              const s = size ?? 24;
               switch (route.name) {
                 case 'Plans':
                   return <Ionicons name="clipboard-outline" size={s} color={color} />;
@@ -264,39 +323,55 @@ export default function PatientDetailTabs({ id, nome, diagnostico }: Props) {
         <View
           style={{
             flex: 1,
-            backgroundColor: 'rgba(0,0,0,0.25)',
+            backgroundColor: 'rgba(0,0,0,0.4)',
             justifyContent: 'flex-end',
           }}
         >
-          <View
+          <SafeAreaView
+            edges={['bottom']}
             style={{
-              backgroundColor: '#fff',
-              borderTopLeftRadius: 16,
-              borderTopRightRadius: 16,
-              padding: 16,
-              gap: 8,
+              backgroundColor: colors.background,
+              borderTopLeftRadius: radius.lg,
+              borderTopRightRadius: radius.lg,
+              padding: spacing(2),
+              gap: spacing(1),
               maxHeight: '80%',
             }}
           >
-            <Text style={[typography.h2, { marginBottom: 12 }]}>Editar paciente</Text>
+            <Text style={[typography.h2, { marginBottom: spacing(1.5) }]}>Editar paciente</Text>
 
-            <ScrollView contentContainerStyle={{ gap: 10, paddingBottom: 8 }}>
+            <ScrollView contentContainerStyle={{ gap: spacing(1.25), paddingBottom: spacing(1) }}>
               <Input
                 placeholder="Nome"
                 value={String(form.nome ?? '')}
                 onChangeText={(t) => setCampo('nome', t)}
               />
+              
               <Input
-                placeholder="Idade"
+                placeholder="Data de Nascimento (DD/MM/AAAA)"
                 keyboardType="numeric"
-                value={form.idade !== undefined ? String(form.idade) : ''}
-                onChangeText={(t) => setCampo('idade', Number(t || 0))}
+                maxLength={10}
+                value={form.dataNascimento !== undefined ? String(form.dataNascimento) : ''}
+                onChangeText={(t) => setCampo('dataNascimento', formatarData(t))}
               />
-              <Input
-                placeholder="Gênero"
-                value={String(form.genero ?? '')}
-                onChangeText={(t) => setCampo('genero', t)}
-              />
+
+              <View style={{ gap: spacing(1) }}>
+                <Text style={{ fontWeight: '600', color: colors.text }}>Gênero</Text>
+                
+                <View style={{ flexDirection: 'row', gap: spacing(1) }}>
+                  <Chip 
+                    label="Masculino" 
+                    active={form.genero === GeneroPaciente.MASCULINO} 
+                    onPress={() => setCampo('genero', GeneroPaciente.MASCULINO)} 
+                  />
+                  <Chip 
+                    label="Feminino" 
+                    active={form.genero === GeneroPaciente.FEMININO} 
+                    onPress={() => setCampo('genero', GeneroPaciente.FEMININO)} 
+                  />
+                </View>
+              </View>
+              
               <Input
                 placeholder="Diagnóstico"
                 value={String(form.diagnostico ?? '')}
@@ -306,24 +381,25 @@ export default function PatientDetailTabs({ id, nome, diagnostico }: Props) {
                 placeholder="Sintomas"
                 value={String(form.sintomas ?? '')}
                 onChangeText={(t) => setCampo('sintomas', t)}
+                multiline
               />
             </ScrollView>
 
-            <View style={{ flexDirection: 'row', gap: 10, marginTop: 8 }}>
+            <View style={{ flexDirection: 'row', gap: spacing(1.25), marginTop: spacing(1) }}>
               <Button
                 title={updMut.isPending ? 'Salvando...' : 'Salvar'}
                 onPress={() => updMut.mutate()}
                 disabled={updMut.isPending}
-                style={{ paddingVertical: 12 }}
+                style={{ flex: 1 }}
               />
               <Button
                 title="Cancelar"
                 variant="outline"
                 onPress={() => setEditOpen(false)}
-                style={{ paddingVertical: 12 }}
+                style={{ flex: 1 }}
               />
             </View>
-          </View>
+          </SafeAreaView>
         </View>
       </Modal>
     </View>

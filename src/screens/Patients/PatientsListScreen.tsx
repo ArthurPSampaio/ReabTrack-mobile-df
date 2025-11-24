@@ -5,6 +5,7 @@ import {
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
+  SafeAreaView,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -14,7 +15,7 @@ import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import { colors } from '../../theme/colors';
-import { typography } from '../../theme/tokens';
+import { typography, spacing } from '../../theme/tokens';
 
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
@@ -56,10 +57,10 @@ export default function PatientsListScreen({ navigation }: Props) {
 
   if (isError) {
     return (
-      <View style={{ padding: 16 }}>
+      <View style={{ padding: spacing(2) }}>
         <Text>Erro ao carregar pacientes.</Text>
         <TouchableOpacity onPress={() => refetch()}>
-          <Text style={{ textDecorationLine: 'underline', marginTop: 8 }}>
+          <Text style={{ textDecorationLine: 'underline', marginTop: spacing(1) }}>
             Tentar novamente
           </Text>
         </TouchableOpacity>
@@ -68,102 +69,102 @@ export default function PatientsListScreen({ navigation }: Props) {
   }
 
   return (
-    <View style={{ flex: 1, padding: 16, gap: 12 }}>
-      <View style={{ gap: 8 }}>
-        <Text style={[typography.h1]}>Pacientes</Text>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.surface }}>
+      <View style={{ padding: spacing(2), gap: spacing(1.5), flex: 1 }}>
+        <View style={{ gap: spacing(1) }}>
+          <Text style={[typography.h1]}>Pacientes</Text>
 
-        <View style={{ position: 'relative' }}>
-          <MaterialCommunityIcons
-            name="magnify"
-            size={20}
-            color={colors.textMuted}
-            style={{ position: 'absolute', left: 10, top: 14 }}
-          />
-          <Input
-            placeholder="Buscar por nome ou diagnóstico..."
-            value={search}
-            onChangeText={setSearch}
-            style={{ paddingLeft: 36 }}
-          />
-        </View>
-      </View>
-
-      <Button
-        title="Novo Paciente"
-        onPress={() => navigation.navigate('PatientNew')}
-      />
-
-      <FlatList
-        data={pacientes || []}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={{ gap: 10, paddingBottom: 24 }}
-        ListEmptyComponent={
-          <Card style={{ alignItems: 'center', paddingVertical: 30, gap: 8 }}>
+          <View style={{ position: 'relative', justifyContent: 'center' }}>
             <MaterialCommunityIcons
-              name="account-question"
-              size={26}
-              color={colors.textMuted}
+              name="magnify"
+              size={22}
+              color={colors.placeholder}
+              style={{ position: 'absolute', left: spacing(1.5), zIndex: 1 }}
             />
-            <Text style={[typography.h2]}>Nenhum paciente encontrado</Text>
-            <Text
-              style={{
-                ...typography.muted,
-                textAlign: 'center',
-                paddingHorizontal: 20,
-              }}
-            >
-              {debounced
-                ? 'Tente outro termo de busca.'
-                : 'Cadastre o primeiro paciente para começar.'}
-            </Text>
-          </Card>
-        }
-        renderItem={({ item }) => (
-          <Card>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <View
+            <Input
+              placeholder="Buscar por nome ou diagnóstico..."
+              value={search}
+              onChangeText={setSearch}
+              style={{ paddingLeft: spacing(5) }}
+            />
+          </View>
+        </View>
+
+        <Button
+          title="Novo Paciente"
+          onPress={() => navigation.navigate('PatientNew')}
+        />
+
+        <FlatList
+          data={pacientes || []}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={{ gap: spacing(1.25), paddingBottom: spacing(3) }}
+          ListEmptyComponent={
+            <Card style={{ alignItems: 'center', paddingVertical: spacing(4), gap: spacing(1) }}>
+              <MaterialCommunityIcons
+                name="account-question"
+                size={32}
+                color={colors.textMuted}
+              />
+              <Text style={[typography.h2]}>Nenhum paciente encontrado</Text>
+              <Text
                 style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 22,
-                  backgroundColor: colors.surface,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderWidth: 1,
-                  borderColor: colors.line,
+                  ...typography.small,
+                  textAlign: 'center',
+                  paddingHorizontal: spacing(2.5),
                 }}
               >
-                <MaterialCommunityIcons
-                  name="account-heart-outline"
-                  size={22}
-                  color={colors.brown}
+                {debounced
+                  ? 'Tente outro termo de busca.'
+                  : 'Cadastre o primeiro paciente para começar.'}
+              </Text>
+            </Card>
+          }
+          renderItem={({ item }) => (
+            <Card style={{ paddingVertical: spacing(1.5) }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing(1.5) }}>
+                <View
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 24,
+                    backgroundColor: colors.primaryLight,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <MaterialCommunityIcons
+                    name="account-heart-outline"
+                    size={24}
+                    color={colors.primaryDark}
+                  />
+                </View>
+
+                <View style={{ flex: 1 }}>
+                  <Text style={[typography.h3]} numberOfLines={1}>
+                    {item.nome}
+                  </Text>
+                  <Text style={typography.small} numberOfLines={2}>
+                    {item.diagnostico}
+                  </Text>
+                </View>
+
+                <Button
+                  title="Abrir"
+                  variant="outline"
+                  onPress={() =>
+                    navigation.navigate('PatientDetail', {
+                      id: item.id,
+                      nome: item.nome,
+                    })
+                  }
+                  style={{ paddingHorizontal: spacing(2), paddingVertical: spacing(1) }}
                 />
               </View>
-
-              <View style={{ flex: 1 }}>
-                <Text style={[typography.h2]} numberOfLines={1}>
-                  {item.nome}
-                </Text>
-                <Text style={typography.muted} numberOfLines={2}>
-                  {item.diagnostico}
-                </Text>
-              </View>
-
-              <Button
-                title="Abrir"
-                variant="outline"
-                onPress={() =>
-                  navigation.navigate('PatientDetail', {
-                    id: item.id,
-                    nome: item.nome,
-                  })
-                }
-                style={{ paddingHorizontal: 16, paddingVertical: 10 }}
-              />
-            </View>
-          </Card>
-        )}
-      />
-    </View>
+            </Card>
+          )}
+        />
+      </View>
+    </SafeAreaView>
   );
 }

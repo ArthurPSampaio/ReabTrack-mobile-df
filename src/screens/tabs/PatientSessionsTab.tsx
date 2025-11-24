@@ -34,7 +34,7 @@ import { listPlanosByPaciente } from '../../services/api/plans';
 import Card from '../../components/ui/Card';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
-import { typography } from '../../theme/tokens';
+import { typography, spacing, radius } from '../../theme/tokens';
 import { colors } from '../../theme/colors';
 
 type Props = CompositeScreenProps<
@@ -43,6 +43,12 @@ type Props = CompositeScreenProps<
 >;
 
 const STATUS: StatusSessao[] = ['scheduled', 'completed', 'canceled', 'no_show'];
+const labelMap: Record<StatusSessao, string> = {
+  scheduled: 'Agendada',
+  completed: 'Concluída',
+  canceled: 'Cancelada',
+  no_show: 'Faltou',
+};
 
 function formatDateTime(d?: Date) {
   if (!d) return 'Selecionar...';
@@ -84,6 +90,23 @@ async function pickDateTimeAndroid(
     },
   });
 }
+
+const Chip = ({ label, active, onPress }: { label: string; active?: boolean; onPress?: () => void }) => (
+  <TouchableOpacity
+    onPress={onPress}
+    disabled={!onPress}
+    style={{
+      paddingHorizontal: spacing(1.5),
+      paddingVertical: spacing(1),
+      borderWidth: 1.5,
+      borderColor: active ? colors.primary : colors.line,
+      borderRadius: 999,
+      backgroundColor: active ? colors.primary : colors.background,
+    }}
+  >
+    <Text style={{ color: active ? colors.white : colors.text, fontWeight: '600', fontSize: 13 }}>{label}</Text>
+  </TouchableOpacity>
+);
 
 export default function PatientSessionsTab({ route }: Props) {
   const { id } = route.params;
@@ -187,22 +210,23 @@ export default function PatientSessionsTab({ route }: Props) {
   };
 
   const ListHeader = (
-    <View style={{ gap: 12 }}>
+    <View style={{ gap: spacing(1.5) }}>
       <View
         style={{
-          paddingVertical: 12,
+          paddingVertical: spacing(1.5),
           borderBottomWidth: 1,
           borderBottomColor: colors.line,
+          backgroundColor: colors.background,
         }}
       >
         <Text style={[typography.h1]}>Sessões</Text>
       </View>
 
-      <Card style={{ gap: 10 }}>
+      <Card style={{ gap: spacing(1.25) }}>
         <Text style={[typography.h2]}>Agendar sessão</Text>
 
-        <View style={{ gap: 6 }}>
-          <Text style={{ fontWeight: '600' }}>Início</Text>
+        <View style={{ gap: spacing(0.75) }}>
+          <Text style={{ fontWeight: '600', color: colors.text }}>Início</Text>
           <Button
             title={formatDateTime(inicio)}
             variant="outline"
@@ -215,22 +239,22 @@ export default function PatientSessionsTab({ route }: Props) {
             }}
           />
           {Platform.OS === 'ios' && showInicioIOS && (
-            <View style={{ marginTop: 8 }}>
+            <View style={{ marginTop: spacing(1) }}>
               <DateTimePicker
                 value={inicio || new Date()}
                 mode="datetime"
                 display="inline"
                 onChange={(_e, d) => d && setInicio(d)}
               />
-              <View style={{ marginTop: 8 }}>
+              <View style={{ marginTop: spacing(1) }}>
                 <Button title="Concluir" onPress={() => setShowInicioIOS(false)} />
               </View>
             </View>
           )}
         </View>
 
-        <View style={{ gap: 6 }}>
-          <Text style={{ fontWeight: '600' }}>Fim</Text>
+        <View style={{ gap: spacing(0.75) }}>
+          <Text style={{ fontWeight: '600', color: colors.text }}>Fim</Text>
           <Button
             title={formatDateTime(fim)}
             variant="outline"
@@ -246,51 +270,40 @@ export default function PatientSessionsTab({ route }: Props) {
             }}
           />
           {Platform.OS === 'ios' && showFimIOS && (
-            <View style={{ marginTop: 8 }}>
+            <View style={{ marginTop: spacing(1) }}>
               <DateTimePicker
                 value={fim || (inicio ? new Date(inicio.getTime() + 60 * 60 * 1000) : new Date())}
                 mode="datetime"
                 display="inline"
                 onChange={(_e, d) => d && setFim(d)}
               />
-              <View style={{ marginTop: 8 }}>
+              <View style={{ marginTop: spacing(1) }}>
                 <Button title="Concluir" onPress={() => setShowFimIOS(false)} />
               </View>
             </View>
           )}
         </View>
 
-        <View style={{ gap: 8 }}>
-          <Text style={{ fontWeight: '600' }}>Plano</Text>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        <View style={{ gap: spacing(1) }}>
+          <Text style={{ fontWeight: '600', color: colors.text }}>Plano</Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing(1) }}>
             {(planosQ.data || []).map((pl) => {
               const active = planoId === pl.id;
               return (
-                <TouchableOpacity
+                <Chip
                   key={pl.id}
-                  activeOpacity={0.9}
+                  label={pl.objetivoGeral}
+                  active={active}
                   onPress={() => setPlanoId(pl.id)}
-                  style={{
-                    paddingHorizontal: 12,
-                    paddingVertical: 8,
-                    borderWidth: 1,
-                    borderColor: active ? colors.primary : colors.line,
-                    borderRadius: 999,
-                    backgroundColor: active ? colors.primary : '#fff',
-                  }}
-                >
-                  <Text style={{ color: active ? '#fff' : colors.text }}>
-                    {pl.objetivoGeral}
-                  </Text>
-                </TouchableOpacity>
+                />
               );
             })}
           </View>
           {!planoId && !!(planosQ.data || []).length && (
-            <Text style={{ color: colors.textMuted, fontSize: 12 }}>Selecione um plano.</Text>
+            <Text style={typography.small}>Selecione um plano.</Text>
           )}
           {!(planosQ.data || []).length && (
-            <Text style={{ color: colors.textMuted, fontSize: 12 }}>
+            <Text style={typography.small}>
               Nenhum plano encontrado para este paciente.
             </Text>
           )}
@@ -317,7 +330,7 @@ export default function PatientSessionsTab({ route }: Props) {
       <FlatList
         data={sessoesQ.data || []}
         keyExtractor={(s) => s.id}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24, gap: 12, paddingTop: 16 }}
+        contentContainerStyle={{ padding: spacing(2), gap: spacing(1.5) }}
         ListHeaderComponent={ListHeader}
         refreshControl={
           <RefreshControl
@@ -328,7 +341,7 @@ export default function PatientSessionsTab({ route }: Props) {
         }
         ListEmptyComponent={
           !sessoesQ.isLoading ? (
-            <Text style={{ textAlign: 'center', color: colors.textMuted }}>
+            <Text style={{ textAlign: 'center', ...typography.small }}>
               Nenhuma sessão para este paciente.
             </Text>
           ) : null
@@ -345,48 +358,35 @@ export default function PatientSessionsTab({ route }: Props) {
                 })}`;
 
           return (
-            <Card>
-              <Text style={[typography.h2]}>{horario}</Text>
-              <Text style={typography.muted}>{item.local || 'Sem local'}</Text>
-              {!!item.observacoes && <Text style={{ marginTop: 6 }}>{item.observacoes}</Text>}
+            <Card style={{ gap: spacing(1) }}>
+              <Text style={[typography.h3]}>{horario}</Text>
+              <Text style={typography.small}>{item.local || 'Sem local'}</Text>
+              {!!item.observacoes && <Text style={{ marginTop: spacing(0.75), ...typography.body }}>{item.observacoes}</Text>}
 
               <View
                 style={{
-                  marginTop: 10,
+                  marginTop: spacing(1.25),
                   flexDirection: 'row',
                   flexWrap: 'wrap',
-                  gap: 8,
+                  gap: spacing(1),
                   alignItems: 'center',
                 }}
               >
-                <Text style={{ fontWeight: '700' }}>Status:</Text>
+                <Text style={{ fontWeight: '700', color: colors.text, marginRight: spacing(0.5) }}>Status:</Text>
                 {STATUS.map((s) => {
-                  const labelMap: Record<StatusSessao, string> = {
-                    scheduled: 'Agendada',
-                    completed: 'Concluída',
-                    canceled: 'Cancelada',
-                    no_show: 'Faltou',
-                  };
                   const active = item.status === s;
                   return (
-                    <TouchableOpacity
+                    <Chip
                       key={s}
-                      activeOpacity={0.9}
+                      label={labelMap[s]}
+                      active={active}
                       onPress={() => updateMut.mutate({ sessaoId: item.id, dto: { status: s } })}
-                      style={{
-                        paddingHorizontal: 12,
-                        paddingVertical: 8,
-                        borderWidth: 1,
-                        borderColor: active ? colors.primary : colors.line,
-                        borderRadius: 999,
-                        backgroundColor: active ? colors.primary : '#fff',
-                      }}
-                    >
-                      <Text style={{ color: active ? '#fff' : colors.text }}>{labelMap[s]}</Text>
-                    </TouchableOpacity>
+                    />
                   );
                 })}
-                <View style={{ flex: 1 }} />
+                
+              </View>
+              <View style={{ marginTop: spacing(1.5), borderTopWidth: 1, borderTopColor: colors.line, paddingTop: spacing(1.5) }}>
                 <Button title="Remover" variant="outline" onPress={() => onRemover(item.id)} />
               </View>
             </Card>

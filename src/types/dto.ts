@@ -1,8 +1,31 @@
+export enum GeneroPaciente {
+  MASCULINO = 'Masculino',
+  FEMININO = 'Feminino',
+}
+
+export enum StatusPlano {
+  ATIVO = 'Ativo',
+  CONCLUIDO = 'Concluído',
+  CANCELADO = 'Cancelado',
+}
+
+export enum TipoAtividade {
+  FORTALECIMENTO = 'Fortalecimento',
+  ALONGAMENTO = 'Alongamento',
+  AEROBICO = 'Aeróbico',
+  EQUILIBRIO = 'Equilíbrio',
+  OUTRO = 'Outro',
+}
+
+export type StatusSessao = 'scheduled' | 'completed' | 'canceled' | 'no_show';
+
+// --- DTOs ---
+
 export type PacienteDto = {
   id: string;
   nome: string;
-  idade: number;
-  genero: string;
+  dataNascimento: string; 
+  genero: GeneroPaciente; 
   diagnostico: string;
   sintomas: string;
 };
@@ -17,55 +40,31 @@ export type Paginated<T> = {
   };
 };
 
-export type StatusPlano = 'Ativo' | 'Concluído' | 'Cancelado';
-
-export type PlanoDto = {
-  id: string;
-  objetivoGeral: string;
-  diagnosticoRelacionado: string;
-  status: StatusPlano;
-  pacienteId: string;
-  nome?: string;
-  dataInicio?: string;
-  dataFimPrevista?: string;
-  atividades?: AtividadeDto[];
-};
-
-export type TipoAtividade =
-  | 'Fortalecimento'
-  | 'Alongamento'
-  | 'Aeróbico'
-  | 'Equilíbrio'
-  | 'Outro';
-
 export type AtividadeDto = {
   id?: string;
   nome: string;
   descricao?: string;
-  tipo: TipoAtividade;
-  duracaoMinutos?: number;
+  tipo?: TipoAtividade;
   series?: number;
   repeticoes?: number;
   frequencia?: string;
   observacoes?: string;
 };
 
-export type StatusSessao = 'scheduled' | 'completed' | 'canceled' | 'no_show';
-
-export type SessaoDto = {
+export type PlanoDto = {
   id: string;
-  inicio: string;
-  fim: string;
-  status: StatusSessao;
-  local?: string;
-  observacoes?: string;
-  pacienteId: string;
-  planoId: string;
+  objetivoGeral: string;
+  diagnosticoRelacionado: string;
+  dataInicio: string; 
+  dataFimPrevista?: string;
+  status: StatusPlano;
+  paciente: PacienteDto;
+  atividades: AtividadeDto[];
 };
 
 export type RegistroDto = {
   id: string;
-  dataSessao: string;
+  dataSessao: string; 
   escalaDor?: number;
   percepcaoEsforco?: number;
   conseguiuRealizarTudo?: boolean;
@@ -75,4 +74,15 @@ export type RegistroDto = {
   planoProximaSessao?: string;
   pacienteId: string;
   planoId: string;
+};
+
+export type SessaoDto = {
+  id: string;
+  inicio: string; 
+  fim: string;
+  status: StatusSessao;
+  local?: string;
+  observacoes?: string;
+  paciente: PacienteDto;
+  plano: PlanoDto; 
 };

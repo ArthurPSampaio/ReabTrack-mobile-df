@@ -5,6 +5,7 @@ import { getPaciente } from '../../services/api/patients';
 import PatientDetailTabs from '../../navigation/PatientDetailTabs';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
+import { spacing } from '../../theme/tokens';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PatientDetail'>;
 
@@ -26,10 +27,10 @@ export default function PatientDetailScreen({ route }: Props) {
 
   if (isError || !data) {
     return (
-      <View style={{ padding: 16 }}>
+      <View style={{ padding: spacing(2) }}>
         <Text style={{ fontWeight: '700' }}>Erro ao carregar paciente</Text>
         <TouchableOpacity onPress={() => refetch()}>
-          <Text style={{ textDecorationLine: 'underline', marginTop: 12 }}>
+          <Text style={{ textDecorationLine: 'underline', marginTop: spacing(1.5) }}>
             Tentar novamente
           </Text>
         </TouchableOpacity>

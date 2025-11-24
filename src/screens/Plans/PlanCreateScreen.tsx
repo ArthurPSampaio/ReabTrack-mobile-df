@@ -14,12 +14,25 @@ import Card from '../../components/ui/Card';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
 import { colors } from '../../theme/colors';
-import { typography } from '../../theme/tokens';
+import { typography, spacing } from '../../theme/tokens';
 
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
+import { StatusPlano } from '../../types/dto';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PlanCreate'>;
+
+const formatarData = (text: string): string => {
+  const numeros = text.replace(/\D/g, '');
+  const truncado = numeros.slice(0, 8);
+  if (truncado.length > 4) {
+    return `${truncado.slice(0, 2)}/${truncado.slice(2, 4)}/${truncado.slice(4)}`;
+  }
+  if (truncado.length > 2) {
+    return `${truncado.slice(0, 2)}/${truncado.slice(2)}`;
+  }
+  return truncado;
+};
 
 export default function PlanCreateScreen({ route, navigation }: Props) {
   const { patientId } = route.params;
@@ -49,12 +62,22 @@ export default function PlanCreateScreen({ route, navigation }: Props) {
       return;
     }
 
+    let dataISO: string | undefined = undefined;
+    if (dataFimPrevista.trim()) {
+      if (!dataFimPrevista.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+        Alert.alert('Atenção', 'Data de término inválida. Use o formato DD/MM/AAAA.');
+        return;
+      }
+      const partes = dataFimPrevista.split('/');
+      dataISO = `${partes[2]}-${partes[1]}-${partes[0]}`;
+    }
+
     mutate({
       pacienteId: patientId,
       objetivoGeral,
       diagnosticoRelacionado,
-      status: 'Ativo',
-      ...(dataFimPrevista ? { dataFimPrevista } : {}),
+      status: StatusPlano.ATIVO,
+      dataFimPrevista: dataISO, 
       atividades: [],
     });
   };
@@ -64,10 +87,10 @@ export default function PlanCreateScreen({ route, navigation }: Props) {
       style={{ flex: 1, backgroundColor: colors.surface }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView contentContainerStyle={{ padding: 16, gap: 16 }}>
+      <ScrollView contentContainerStyle={{ padding: spacing(2), gap: spacing(2) }}>
         <Text style={[typography.h1]}>Novo Plano</Text>
 
-        <Card style={{ gap: 12 }}>
+        <Card style={{ gap: spacing(1.5) }}>
           <Input
             label="Objetivo Geral"
             placeholder="Ex: Melhorar mobilidade e força"
@@ -82,9 +105,11 @@ export default function PlanCreateScreen({ route, navigation }: Props) {
           />
           <Input
             label="Data de término (opcional)"
-            placeholder="AAAA-MM-DD"
+            placeholder="DD/MM/AAAA" 
+            keyboardType="numeric"
+            maxLength={10}
             value={dataFimPrevista}
-            onChangeText={setDataFimPrevista}
+            onChangeText={(t) => setDataFimPrevista(formatarData(t))} 
           />
 
           <Button

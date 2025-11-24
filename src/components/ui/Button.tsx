@@ -1,7 +1,7 @@
 import React from 'react';
 import { TouchableOpacity, Text, TouchableOpacityProps, ActivityIndicator } from 'react-native';
 import { colors } from '../../theme/colors';
-import { radius } from '../../theme/tokens';
+import { radius, spacing } from '../../theme/tokens';
 
 type Props = TouchableOpacityProps & { title: string; loading?: boolean; variant?: 'primary'|'outline' };
 
@@ -14,10 +14,13 @@ export default function Button({ title, loading, variant='primary', style, ...re
         {
           backgroundColor: isPrimary ? colors.primary : 'transparent',
           borderColor: colors.primary,
-          borderWidth: 1,
-          paddingVertical: 12,
-          borderRadius: radius.lg,
+          borderWidth: 1.5,
+          paddingVertical: spacing(1.5),
+          paddingHorizontal: spacing(2),
+          borderRadius: radius.md,
           alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: 48,
         },
         style,
       ]}
@@ -27,7 +30,7 @@ export default function Button({ title, loading, variant='primary', style, ...re
       {loading ? (
         <ActivityIndicator color={isPrimary ? colors.white : colors.primary} />
       ) : (
-        <Text style={{ color: isPrimary ? colors.white : colors.primary, fontWeight: '700' }}>{title}</Text>
+        <Text style={{ color: isPrimary ? colors.white : colors.primary, fontSize: 16, fontWeight: '700' }}>{title}</Text>
       )}
     </TouchableOpacity>
   );

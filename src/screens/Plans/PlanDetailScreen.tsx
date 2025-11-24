@@ -15,24 +15,29 @@ import Card from '../../components/ui/Card';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
 import StatusBadge from '../../components/ui/StatusBadge';
-import { typography } from '../../theme/tokens';
+import { typography, spacing, radius } from '../../theme/tokens';
 import { colors } from '../../theme/colors';
 
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
-import type { AtividadeDto, TipoAtividade } from '../../types/dto';
+import { AtividadeDto, StatusPlano, TipoAtividade } from '../../types/dto'; // Importe Enums
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PlanDetail'>;
 
+// Use os Enums
 const TIPOS: TipoAtividade[] = [
-  'Fortalecimento',
-  'Alongamento',
-  'Aeróbico',
-  'Equilíbrio',
-  'Outro',
+  TipoAtividade.FORTALECIMENTO,
+  TipoAtividade.ALONGAMENTO,
+  TipoAtividade.AEROBICO,
+  TipoAtividade.EQUILIBRIO,
+  TipoAtividade.OUTRO,
 ];
 
-const STATUS = ['Ativo', 'Concluído', 'Cancelado'] as const;
+const STATUS: StatusPlano[] = [
+  StatusPlano.ATIVO,
+  StatusPlano.CONCLUIDO,
+  StatusPlano.CANCELADO,
+];
 
 export default function PlanDetailScreen({ route, navigation }: Props) {
   const { planId } = route.params;
@@ -44,7 +49,8 @@ export default function PlanDetailScreen({ route, navigation }: Props) {
   });
 
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
-  const [form, setForm] = useState<AtividadeDto>({ nome: '', tipo: 'Fortalecimento' });
+  // Defina o tipo padrão usando o Enum
+  const [form, setForm] = useState<AtividadeDto>({ nome: '', tipo: TipoAtividade.FORTALECIMENTO });
   const setCampo = (k: keyof AtividadeDto, v: any) =>
     setForm((s) => ({ ...s, [k]: v }));
 
@@ -53,7 +59,7 @@ export default function PlanDetailScreen({ route, navigation }: Props) {
   const saveMut = useMutation({
     mutationFn: (ativs: AtividadeDto[]) => saveAtividades(planId, ativs),
     onSuccess: async () => {
-      setForm({ nome: '', tipo: 'Fortalecimento' });
+      setForm({ nome: '', tipo: TipoAtividade.FORTALECIMENTO });
       setEditingIndex(null);
       await qc.invalidateQueries({ queryKey: ['plano', planId] });
       await qc.invalidateQueries({ queryKey: ['planos'] });
@@ -69,7 +75,7 @@ export default function PlanDetailScreen({ route, navigation }: Props) {
   });
 
   const updateStatus = useMutation({
-    mutationFn: (s: 'Ativo' | 'Concluído' | 'Cancelado') =>
+    mutationFn: (s: StatusPlano) => // Use o Enum
       updatePlano(planId, { status: s }),
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ['plano', planId] });
@@ -80,7 +86,7 @@ export default function PlanDetailScreen({ route, navigation }: Props) {
         err?.response?.data?.message ||
         err?.message ||
         'Falha ao atualizar status.';
-      Alert.alert('Erro', msg);
+      Alert.alert('Erro', String(msg));
     },
   });
 
@@ -131,12 +137,12 @@ export default function PlanDetailScreen({ route, navigation }: Props) {
 
   if (isError || !plano) {
     return (
-      <View style={{ padding: 16 }}>
+      <View style={{ padding: spacing(2) }}>
         <Text style={{ fontWeight: '700', color: colors.danger }}>
           Erro ao carregar plano
         </Text>
         <TouchableOpacity onPress={() => refetch()}>
-          <Text style={{ textDecorationLine: 'underline', marginTop: 8 }}>
+          <Text style={{ textDecorationLine: 'underline', marginTop: spacing(1) }}>
             Tentar novamente
           </Text>
         </TouchableOpacity>
@@ -149,20 +155,20 @@ export default function PlanDetailScreen({ route, navigation }: Props) {
       <SafeAreaView
         edges={['top']}
         style={{
-          backgroundColor: colors.surface,
+          backgroundColor: colors.background,
           borderBottomWidth: 1,
           borderBottomColor: colors.line,
         }}
       >
-        <View style={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: 12, gap: 10 }}>
+        <View style={{ paddingHorizontal: spacing(2), paddingTop: spacing(0.75), paddingBottom: spacing(1.5), gap: spacing(1.25) }}>
           <TouchableOpacity
             onPress={() => navigation.goBack()}
             style={{
               alignSelf: 'flex-start',
-              paddingHorizontal: 12,
-              paddingVertical: 8,
+              paddingHorizontal: spacing(1.5),
+              paddingVertical: spacing(1),
               borderRadius: 999,
-              backgroundColor: '#EFE8DB',
+              backgroundColor: colors.surface,
             }}
           >
             <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text }}>
@@ -173,17 +179,17 @@ export default function PlanDetailScreen({ route, navigation }: Props) {
           <Text style={[typography.h1]} numberOfLines={2}>
             {plano.objetivoGeral}
           </Text>
-          <Text style={typography.muted} numberOfLines={3}>
+          <Text style={typography.small} numberOfLines={3}>
             {plano.diagnosticoRelacionado}
           </Text>
 
-          <View style={{ marginTop: 6 }}>
+          <View style={{ marginTop: spacing(0.75) }}>
             <StatusBadge
-              status={plano.status as 'Ativo' | 'Concluído' | 'Cancelado'}
+              status={plano.status} // Agora está corretamente tipado
             />
           </View>
 
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing(1), marginTop: spacing(1) }}>
             {STATUS.map((s) => {
               const active = plano.status === s;
               return (
@@ -191,15 +197,15 @@ export default function PlanDetailScreen({ route, navigation }: Props) {
                   key={s}
                   onPress={() => updateStatus.mutate(s)}
                   style={{
-                    paddingHorizontal: 12,
-                    paddingVertical: 8,
-                    borderWidth: 1,
+                    paddingHorizontal: spacing(1.5),
+                    paddingVertical: spacing(1),
+                    borderWidth: 1.5,
                     borderColor: active ? colors.primary : colors.line,
                     borderRadius: 999,
-                    backgroundColor: active ? colors.primary : '#fff',
+                    backgroundColor: active ? colors.primary : colors.background,
                   }}
                 >
-                  <Text style={{ color: active ? colors.white : colors.text }}>
+                  <Text style={{ color: active ? colors.white : colors.text, fontWeight: '600', fontSize: 13 }}>
                     {`Marcar como ${s}`}
                   </Text>
                 </TouchableOpacity>
@@ -212,9 +218,9 @@ export default function PlanDetailScreen({ route, navigation }: Props) {
       <FlatList
         data={atividades}
         keyExtractor={(_, i) => String(i)}
-        contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 32 }}
+        contentContainerStyle={{ padding: spacing(2), gap: spacing(1.5), paddingBottom: spacing(4) }}
         ListHeaderComponent={
-          <Card style={{ gap: 10, marginBottom: 12 }}>
+          <Card style={{ gap: spacing(1.25), marginBottom: spacing(1.5) }}>
             <Text style={[typography.h2]}>
               {editingIndex === null ? 'Adicionar atividade' : 'Editar atividade'}
             </Text>
@@ -230,7 +236,7 @@ export default function PlanDetailScreen({ route, navigation }: Props) {
               onChangeText={(t) => setCampo('descricao', t)}
             />
 
-            <View style={{ flexDirection: 'row', gap: 8 }}>
+            <View style={{ flexDirection: 'row', gap: spacing(1) }}>
               <Input
                 placeholder="Séries"
                 keyboardType="numeric"
@@ -258,7 +264,7 @@ export default function PlanDetailScreen({ route, navigation }: Props) {
               onChangeText={(t) => setCampo('observacoes', t)}
             />
 
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing(1) }}>
               {TIPOS.map((t) => {
                 const active = form.tipo === t;
                 return (
@@ -266,15 +272,15 @@ export default function PlanDetailScreen({ route, navigation }: Props) {
                     key={t}
                     onPress={() => setCampo('tipo', t)}
                     style={{
-                      paddingHorizontal: 12,
-                      paddingVertical: 8,
-                      borderWidth: 1,
+                      paddingHorizontal: spacing(1.5),
+                      paddingVertical: spacing(1),
+                      borderWidth: 1.5,
                       borderColor: active ? colors.primary : colors.line,
                       borderRadius: 999,
-                      backgroundColor: active ? colors.primary : '#fff',
+                      backgroundColor: active ? colors.primary : colors.background,
                     }}
                   >
-                    <Text style={{ color: active ? colors.white : colors.text }}>
+                    <Text style={{ color: active ? colors.white : colors.text, fontWeight: '600' }}>
                       {t}
                     </Text>
                   </TouchableOpacity>
@@ -289,26 +295,28 @@ export default function PlanDetailScreen({ route, navigation }: Props) {
                 disabled={saveMut.isPending}
               />
             ) : (
-              <View style={{ flexDirection: 'row', gap: 10 }}>
+              <View style={{ flexDirection: 'row', gap: spacing(1.25) }}>
                 <Button
                   title={saveMut.isPending ? 'Salvando...' : 'Salvar edição'}
                   onPress={handleEditConfirm}
                   disabled={saveMut.isPending}
+                  style={{ flex: 1 }}
                 />
                 <Button
                   title="Cancelar"
                   variant="outline"
                   onPress={() => {
                     setEditingIndex(null);
-                    setForm({ nome: '', tipo: 'Fortalecimento' });
+                    setForm({ nome: '', tipo: TipoAtividade.FORTALECIMENTO });
                   }}
+                  style={{ flex: 1 }}
                 />
               </View>
             )}
           </Card>
         }
         ListEmptyComponent={
-          <Text style={{ textAlign: 'center', color: colors.textMuted }}>
+          <Text style={{ textAlign: 'center', ...typography.small }}>
             Nenhuma atividade cadastrada.
           </Text>
         }
@@ -321,31 +329,31 @@ export default function PlanDetailScreen({ route, navigation }: Props) {
                 alignItems: 'center',
               }}
             >
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontWeight: '700' }}>
+              <View style={{ flex: 1, gap: spacing(0.75) }}>
+                <Text style={typography.h3}>
                   {item.nome}
                   {item.tipo ? ` • ${item.tipo}` : ''}
                 </Text>
-                {!!item.descricao && <Text style={{ marginTop: 6 }}>{item.descricao}</Text>}
-                <Text style={{ marginTop: 4, color: colors.textMuted }}>
+                {!!item.descricao && <Text style={typography.body}>{item.descricao}</Text>}
+                <Text style={typography.small}>
                   {item.series ? `Séries: ${item.series}` : ''}
                   {item.repeticoes ? ` • Reps: ${item.repeticoes}` : ''}
                   {item.frequencia ? ` • ${item.frequencia}` : ''}
                 </Text>
                 {!!item.observacoes && (
-                  <Text style={{ marginTop: 4, color: colors.textMuted }}>
+                  <Text style={typography.small}>
                     Obs: {item.observacoes}
                   </Text>
                 )}
               </View>
 
-              <View style={{ flexDirection: 'row', gap: 12 }}>
+              <View style={{ flexDirection: 'row', gap: spacing(1.5), marginLeft: spacing(1) }}>
                 <TouchableOpacity
                   onPress={() => handleEditStart(index)}
                   style={{
-                    padding: 10,
-                    borderRadius: 8,
-                    backgroundColor: '#EFE8DB',
+                    padding: spacing(1.25),
+                    borderRadius: radius.md,
+                    backgroundColor: colors.surface,
                   }}
                 >
                   <Feather name="edit-3" size={20} color={colors.text} />
@@ -353,12 +361,12 @@ export default function PlanDetailScreen({ route, navigation }: Props) {
                 <TouchableOpacity
                   onPress={() => handleRemove(index)}
                   style={{
-                    padding: 10,
-                    borderRadius: 8,
-                    backgroundColor: '#FAE4E1',
+                    padding: spacing(1.25),
+                    borderRadius: radius.md,
+                    backgroundColor: '#FBEAEB',
                   }}
                 >
-                  <Feather name="trash-2" size={20} color="#A33" />
+                  <Feather name="trash-2" size={20} color={colors.danger} />
                 </TouchableOpacity>
               </View>
             </View>

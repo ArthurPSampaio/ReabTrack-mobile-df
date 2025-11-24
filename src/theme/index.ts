@@ -7,7 +7,7 @@ export const navTheme: Theme = {
     ...DefaultTheme.colors,
     primary: colors.primary,
     background: colors.surface,
-    card: colors.surface,
+    card: colors.background,
     text: colors.text,
     border: colors.line,
     notification: colors.primaryDark,

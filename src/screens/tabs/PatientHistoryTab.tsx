@@ -19,7 +19,7 @@ import { listPlanosByPaciente } from '../../services/api/plans';
 import Card from '../../components/ui/Card';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
-import { typography } from '../../theme/tokens';
+import { typography, spacing, radius } from '../../theme/tokens';
 import { colors } from '../../theme/colors';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { PatientDetailTabParamList } from '../../navigation/types';
@@ -32,15 +32,15 @@ const Chip = ({ label, active, onPress }: { label: string; active?: boolean; onP
     onPress={onPress}
     disabled={!onPress}
     style={{
-      paddingHorizontal: 12,
-      paddingVertical: 8,
-      borderWidth: 1,
+      paddingHorizontal: spacing(1.5),
+      paddingVertical: spacing(1),
+      borderWidth: 1.5,
       borderColor: active ? colors.primary : colors.line,
       borderRadius: 999,
-      backgroundColor: active ? colors.primary : '#fff',
+      backgroundColor: active ? colors.primary : colors.background,
     }}
   >
-    <Text style={{ color: active ? colors.white : colors.text }}>{label}</Text>
+    <Text style={{ color: active ? colors.white : colors.text, fontWeight: '600', fontSize: 13 }}>{label}</Text>
   </TouchableOpacity>
 );
 
@@ -80,7 +80,7 @@ export default function PatientHistoryTab({ route }: Props) {
 
   const [dataSessao, setDataSessao] = useState<Date>();
   const [escalaDor, setEscalaDor] = useState<number>();
-  const [percepEsforco, setPercepEsforco] = useState<number>();
+  const [percepcaoEsforco, setPercepcaoEsforco] = useState<number>();
   const [conseguiuTudo, setConseguiuTudo] = useState<boolean>();
   const [notasSubj, setNotasSubj] = useState('');
   const [notasObj, setNotasObj] = useState('');
@@ -94,7 +94,7 @@ export default function PatientHistoryTab({ route }: Props) {
     setEditingId(null);
     setDataSessao(undefined);
     setEscalaDor(undefined);
-    setPercepEsforco(undefined);
+    setPercepcaoEsforco(undefined);
     setConseguiuTudo(undefined);
     setNotasSubj('');
     setNotasObj('');
@@ -142,7 +142,7 @@ export default function PatientHistoryTab({ route }: Props) {
       planoId,
       dataSessao: toISO(dataSessao),
       escalaDor,
-      percepEsforco,
+      percepcaoEsforco,
       conseguiuRealizarTudo: conseguiuTudo,
       notasSubjetivas: notasSubj || undefined,
       notasObjetivas: notasObj || undefined,
@@ -157,7 +157,7 @@ export default function PatientHistoryTab({ route }: Props) {
     setEditingId(r.id);
     setDataSessao(r.dataSessao ? new Date(r.dataSessao) : undefined);
     setEscalaDor(r.escalaDor);
-    setPercepEsforco(r.percepcaoEsforco);
+    setPercepcaoEsforco(r.percepcaoEsforco);
     setConseguiuTudo(r.conseguiuRealizarTudo);
     setNotasSubj(r.notasSubjetivas || '');
     setNotasObj(r.notasObjetivas || '');
@@ -180,14 +180,15 @@ export default function PatientHistoryTab({ route }: Props) {
     >
       <View
         style={{
-          paddingHorizontal: 16,
-          paddingVertical: 10,
+          paddingHorizontal: spacing(2),
+          paddingVertical: spacing(1.25),
           borderBottomWidth: 1,
           borderBottomColor: colors.line,
+          backgroundColor: colors.background,
         }}
       >
         <Text style={[typography.h1]}>Histórico</Text>
-        <Text style={{ ...typography.muted, marginTop: 2 }}>
+        <Text style={{ ...typography.small, marginTop: spacing(0.5) }}>
           Acompanhe a evolução e os registros do paciente.
         </Text>
       </View>
@@ -195,9 +196,9 @@ export default function PatientHistoryTab({ route }: Props) {
       <FlatList
         data={registrosQ.data || []}
         keyExtractor={(r) => r.id}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24, gap: 10 }}
+        contentContainerStyle={{ padding: spacing(2), gap: spacing(1.25) }}
         ListHeaderComponent={
-          <Card style={{ gap: 12 }}>
+          <Card style={{ gap: spacing(1.5) }}>
             <Text style={[typography.h2]}>{editingId ? 'Editar registro' : 'Novo registro'}</Text>
 
             <Button
@@ -228,19 +229,22 @@ export default function PatientHistoryTab({ route }: Props) {
               </View>
             )}
 
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              {(planosQ.data || []).map((pl) => (
-                <Chip
-                  key={pl.id}
-                  label={pl.objetivoGeral}
-                  active={planoId === pl.id}
-                  onPress={() => setPlanoId(pl.id)}
-                />
-              ))}
+            <View style={{ gap: spacing(1) }}>
+              <Text style={{ fontWeight: '600', color: colors.text }}>Plano Associado</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing(1) }}>
+                {(planosQ.data || []).map((pl) => (
+                  <Chip
+                    key={pl.id}
+                    label={pl.objetivoGeral}
+                    active={planoId === pl.id}
+                    onPress={() => setPlanoId(pl.id)}
+                  />
+                ))}
+              </View>
             </View>
 
             <View>
-              <Text style={{ fontWeight: '600', marginBottom: 6 }}>Escala de dor</Text>
+              <Text style={{ fontWeight: '600', marginBottom: spacing(0.75), color: colors.text }}>Escala de dor: {escalaDor ?? 0}/10</Text>
               <Slider
                 minimumValue={0}
                 maximumValue={10}
@@ -248,38 +252,44 @@ export default function PatientHistoryTab({ route }: Props) {
                 value={escalaDor ?? 0}
                 onValueChange={setEscalaDor}
                 minimumTrackTintColor={colors.primary}
+                thumbTintColor={colors.primary}
               />
             </View>
 
             <View>
-              <Text style={{ fontWeight: '600', marginBottom: 6 }}>Percepção de esforço</Text>
+              <Text style={{ fontWeight: '600', marginBottom: spacing(0.75), color: colors.text }}>Percepção de esforço: {percepcaoEsforco ?? 0}/10</Text>
               <Slider
                 minimumValue={0}
                 maximumValue={10}
                 step={1}
-                value={percepEsforco ?? 0}
-                onValueChange={setPercepEsforco}
+                value={percepcaoEsforco ?? 0}
+                onValueChange={setPercepcaoEsforco}
                 minimumTrackTintColor={colors.primary}
+                thumbTintColor={colors.primary}
               />
             </View>
 
-            <View style={{ flexDirection: 'row', gap: 8 }}>
-              <Chip label="Sim" active={conseguiuTudo === true} onPress={() => setConseguiuTudo(true)} />
-              <Chip label="Não" active={conseguiuTudo === false} onPress={() => setConseguiuTudo(false)} />
+            <View style={{ gap: spacing(1) }}>
+              <Text style={{ fontWeight: '600', color: colors.text }}>Conseguiu realizar tudo?</Text>
+              <View style={{ flexDirection: 'row', gap: spacing(1) }}>
+                <Chip label="Sim" active={conseguiuTudo === true} onPress={() => setConseguiuTudo(true)} />
+                <Chip label="Não" active={conseguiuTudo === false} onPress={() => setConseguiuTudo(false)} />
+              </View>
             </View>
 
-            <Input placeholder="Notas subjetivas" value={notasSubj} onChangeText={setNotasSubj} />
-            <Input placeholder="Notas objetivas" value={notasObj} onChangeText={setNotasObj} />
-            <Input placeholder="Avaliação" value={avaliacao} onChangeText={setAvaliacao} />
-            <Input placeholder="Plano para próxima sessão" value={proxima} onChangeText={setProxima} />
+            <Input placeholder="Notas subjetivas (S)" value={notasSubj} onChangeText={setNotasSubj} multiline />
+            <Input placeholder="Notas objetivas (O)" value={notasObj} onChangeText={setNotasObj} multiline />
+            <Input placeholder="Avaliação (A)" value={avaliacao} onChangeText={setAvaliacao} multiline />
+            <Input placeholder="Plano para próxima sessão (P)" value={proxima} onChangeText={setProxima} multiline />
 
-            <View style={{ flexDirection: 'row', gap: 10 }}>
+            <View style={{ flexDirection: 'row', gap: spacing(1.25) }}>
               <Button
                 title={editingId ? 'Salvar edição' : 'Adicionar registro'}
                 onPress={handleSave}
                 disabled={createMut.isPending || updateMut.isPending}
+                style={{ flex: 1 }}
               />
-              {editingId && <Button title="Cancelar" variant="outline" onPress={resetForm} />}
+              {editingId && <Button title="Cancelar" variant="outline" onPress={resetForm} style={{ flex: 1 }} />}
             </View>
           </Card>
         }
@@ -293,23 +303,23 @@ export default function PatientHistoryTab({ route }: Props) {
         renderItem={({ item }) => (
           <Card>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <View>
-                <Text style={[typography.h2]}>{when(item.dataSessao)}</Text>
-                <Text style={typography.muted}>Plano: {planos[item.planoId] || item.planoId}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={[typography.h3]}>{when(item.dataSessao)}</Text>
+                <Text style={typography.small}>Plano: {planos[item.planoId] || item.planoId}</Text>
               </View>
 
-              <View style={{ flexDirection: 'row', gap: 10 }}>
+              <View style={{ flexDirection: 'row', gap: spacing(1) }}>
                 <TouchableOpacity
                   onPress={() => handleEdit(item)}
-                  style={{ padding: 8, backgroundColor: '#EFE8DB', borderRadius: 8 }}
+                  style={{ padding: spacing(1), backgroundColor: colors.surface, borderRadius: radius.md }}
                 >
                   <Feather name="edit-3" size={18} color={colors.text} />
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => handleDelete(item.id)}
-                  style={{ padding: 8, backgroundColor: '#FAE4E1', borderRadius: 8 }}
+                  style={{ padding: spacing(1), backgroundColor: '#FBEAEB', borderRadius: radius.md }}
                 >
-                  <Feather name="trash-2" size={18} color="#A33" />
+                  <Feather name="trash-2" size={18} color={colors.danger} />
                 </TouchableOpacity>
               </View>
             </View>
