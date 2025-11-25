@@ -3,18 +3,31 @@ import { TouchableOpacity, Text, TouchableOpacityProps, ActivityIndicator } from
 import { colors } from '../../theme/colors';
 import { radius, spacing } from '../../theme/tokens';
 
-type Props = TouchableOpacityProps & { title: string; loading?: boolean; variant?: 'primary'|'outline' };
+type Props = TouchableOpacityProps & { 
+  title: string; 
+  loading?: boolean; 
+  variant?: 'primary' | 'outline' | 'text';
+};
 
-export default function Button({ title, loading, variant='primary', style, ...rest }: Props) {
+export default function Button({ title, loading, variant = 'primary', style, ...rest }: Props) {
   const isPrimary = variant === 'primary';
+  const isText = variant === 'text';
+
+  const backgroundColor = isPrimary ? colors.primary : 'transparent';
+  
+  const borderWidth = isText ? 0 : 1.5;
+  const borderColor = isText ? 'transparent' : colors.primary;
+
+  const textColor = isPrimary ? colors.white : colors.primary;
+
   return (
     <TouchableOpacity
       activeOpacity={0.85}
       style={[
         {
-          backgroundColor: isPrimary ? colors.primary : 'transparent',
-          borderColor: colors.primary,
-          borderWidth: 1.5,
+          backgroundColor,
+          borderColor,
+          borderWidth,
           paddingVertical: spacing(1.5),
           paddingHorizontal: spacing(2),
           borderRadius: radius.md,
@@ -28,9 +41,9 @@ export default function Button({ title, loading, variant='primary', style, ...re
       {...rest}
     >
       {loading ? (
-        <ActivityIndicator color={isPrimary ? colors.white : colors.primary} />
+        <ActivityIndicator color={textColor} />
       ) : (
-        <Text style={{ color: isPrimary ? colors.white : colors.primary, fontSize: 16, fontWeight: '700' }}>{title}</Text>
+        <Text style={{ color: textColor, fontSize: 16, fontWeight: '700' }}>{title}</Text>
       )}
     </TouchableOpacity>
   );
