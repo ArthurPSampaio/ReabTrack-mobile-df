@@ -14,14 +14,13 @@ const Tabs = createBottomTabNavigator<PatientDetailTabParamList>();
 
 type Props = {
   id: string;
-  // Nome e Diagnóstico não são mais necessários aqui, pois estão no Header da tela pai
 };
 
 export default function PatientDetailTabs({ id }: Props) {
   return (
     <Tabs.Navigator
       screenOptions={({ route }) => ({
-        headerShown: false, // Sem header interno, pois já temos o da tela pai
+        headerShown: false,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
         tabBarStyle: {
@@ -33,7 +32,6 @@ export default function PatientDetailTabs({ id }: Props) {
         },
         tabBarLabelStyle: { fontSize: 12, fontWeight: '600' },
         tabBarIcon: ({ color, size }) => {
-          // Mapeamento de ícones para cada aba
           if (route.name === 'Plans') return <Ionicons name="clipboard-outline" size={size} color={color} />;
           if (route.name === 'Sessions') return <Ionicons name="calendar-outline" size={size} color={color} />;
           if (route.name === 'History') return <Ionicons name="time-outline" size={size} color={color} />;

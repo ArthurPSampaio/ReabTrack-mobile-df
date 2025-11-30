@@ -11,7 +11,7 @@ import { colors } from '../../theme/colors';
 
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
-import { GeneroPaciente, PacienteDto } from '../../types/dto'; // Importe o Enum e o DTO
+import { GeneroPaciente, PacienteDto } from '../../types/dto'; 
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PatientNew'>;
 
@@ -100,15 +100,10 @@ export default function PatientNewScreen({ navigation }: Props) {
     const partes = form.dataNascimento.split('/');
     const dataISO = `${partes[2]}-${partes[1]}-${partes[0]}`;
 
-    //
-    // --- A CORREÇÃO ESTÁ AQUI ---
-    // Montamos o payload manualmente. Após o 'if (!form.genero)',
-    // o TypeScript sabe que 'form.genero' é do tipo 'GeneroPaciente' (e não 'null').
-    //
     const payload: Omit<PacienteDto, "id"> = {
       nome: form.nome,
       dataNascimento: dataISO,
-      genero: form.genero, // Agora o tipo é inferido corretamente
+      genero: form.genero, 
       diagnostico: form.diagnostico,
       sintomas: form.sintomas,
     };

@@ -17,8 +17,8 @@ export default function Input({ label, helperText, style, ...rest }: Props) {
         onBlur={() => setIsFocused(false)}
         style={[
           {
-            borderWidth: isFocused ? 2 : 1, // Borda mais grossa no foco
-            borderColor: isFocused ? colors.primary : colors.line, // Cor primária no foco
+            borderWidth: isFocused ? 2 : 1, 
+            borderColor: isFocused ? colors.primary : colors.line, 
             borderRadius: radius.md,
             paddingHorizontal: spacing(1.5),
             paddingVertical: spacing(1.25),

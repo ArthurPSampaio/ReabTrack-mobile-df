@@ -90,7 +90,6 @@ export default function DashboardScreen({ navigation }: Props) {
     queryKey: ['pacientes', 'dashboard'],
     queryFn: () => listPacientes(),
   });
-  // Pega apenas os 3 últimos para não poluir demais
   const recentes = (pacientesQ.data || []).slice(0, 3);
 
   const agendaQ = useQuery({
@@ -145,7 +144,6 @@ export default function DashboardScreen({ navigation }: Props) {
         renderItem={() => (
           <View style={{ gap: spacing(2) }}>
             
-            {/* Atalhos Rápidos */}
             <View style={{ flexDirection: 'row', gap: spacing(1.5) }}>
               <TouchableOpacity 
                  onPress={() => navigation.navigate('PatientNew')}
@@ -168,7 +166,6 @@ export default function DashboardScreen({ navigation }: Props) {
               </TouchableOpacity>
             </View>
 
-            {/* --- SEÇÃO ADICIONADA: PACIENTES RECENTES --- */}
             <View style={{ gap: spacing(1) }}>
                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 4 }}>
                   <Text style={[typography.h3]}>Pacientes recentes</Text>
@@ -213,7 +210,6 @@ export default function DashboardScreen({ navigation }: Props) {
                )}
             </View>
 
-            {/* Agenda */}
             <View style={{ gap: spacing(1) }}>
               <Text style={[typography.h3]}>Próximas sessões</Text>
               

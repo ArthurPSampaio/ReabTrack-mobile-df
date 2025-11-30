@@ -19,8 +19,6 @@ export enum TipoAtividade {
 
 export type StatusSessao = 'scheduled' | 'completed' | 'canceled' | 'no_show';
 
-// --- DTOs ---
-
 export type PacienteDto = {
   id: string;
   nome: string;

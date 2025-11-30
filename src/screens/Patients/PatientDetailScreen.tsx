@@ -18,7 +18,6 @@ import Button from '../../components/ui/Button';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PatientDetail'>;
 
-// Funções auxiliares de data (mesmas do PatientNewScreen)
 const formatarData = (text: string): string => {
   const numeros = text.replace(/\D/g, '');
   const truncado = numeros.slice(0, 8);
@@ -67,10 +66,8 @@ export default function PatientDetailScreen({ route, navigation }: Props) {
     sintomas?: string;
   }>({});
 
-  // --- CONFIGURAÇÃO DO CABEÇALHO (HEADER) ---
   useLayoutEffect(() => {
     navigation.setOptions({
-      // Título Customizado: Nome em destaque, diagnóstico pequeno abaixo
       headerTitle: () => (
         <View style={{ alignItems: Platform.OS === 'ios' ? 'center' : 'flex-start' }}>
           <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text }}>
@@ -83,7 +80,6 @@ export default function PatientDetailScreen({ route, navigation }: Props) {
           )}
         </View>
       ),
-      // Botões de Ação na direita (Editar/Excluir)
       headerRight: () => (
         <View style={{ flexDirection: 'row', gap: 8 }}>
            <TouchableOpacity onPress={onOpenEdit} style={{ padding: 4 }}>
@@ -97,7 +93,6 @@ export default function PatientDetailScreen({ route, navigation }: Props) {
     });
   }, [navigation, data]);
 
-  // --- LÓGICA DE EDIÇÃO ---
   const onOpenEdit = () => {
     if (!data) return;
     setForm({
@@ -170,10 +165,8 @@ export default function PatientDetailScreen({ route, navigation }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface }}>
-      {/* AS ABAS AGORA OCUPAM A TELA TODA ABAIXO DO HEADER NATIVO */}
       <PatientDetailTabs id={id} />
 
-      {/* MODAL DE EDIÇÃO */}
       <Modal visible={editOpen} transparent animationType="slide" onRequestClose={() => setEditOpen(false)}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}>
           <SafeAreaView edges={['bottom']} style={{ backgroundColor: colors.background, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 16, maxHeight: '85%' }}>

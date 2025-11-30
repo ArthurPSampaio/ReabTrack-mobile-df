@@ -172,8 +172,8 @@ export default function PatientHistoryTab({ route }: Props) {
   };
 
   const onNew = () => {
-    resetForm(); // reseta e limpa o editingId
-    setModalVisible(true); // abre o modal vazio
+    resetForm(); 
+    setModalVisible(true);
   }
 
   const handleDelete = (idRegistro: string) => {
