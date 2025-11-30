@@ -98,27 +98,32 @@ export default function PatientsListScreen({ navigation }: Props) {
         <FlatList
           data={pacientes || []}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={{ gap: spacing(1.25), paddingBottom: spacing(3) }}
+          contentContainerStyle={{ gap: spacing(1.25), paddingBottom: spacing(3), flexGrow: 1 }} // flexGrow ajuda a centralizar o empty state
           ListEmptyComponent={
-            <Card style={{ alignItems: 'center', paddingVertical: spacing(4), gap: spacing(1) }}>
-              <MaterialCommunityIcons
-                name="account-question"
-                size={32}
-                color={colors.textMuted}
-              />
-              <Text style={[typography.h2]}>Nenhum paciente encontrado</Text>
+            <View style={{ alignItems: 'center', justifyContent: 'center', paddingVertical: spacing(6), gap: spacing(1.5), opacity: 0.7 }}>
+              <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: colors.line, alignItems:'center', justifyContent:'center', marginBottom: 8 }}>
+                <MaterialCommunityIcons
+                  name="account-group-outline"
+                  size={40}
+                  color={colors.textMuted}
+                />
+              </View>
+              <Text style={[typography.h2, { textAlign: 'center', color: colors.textMuted }]}>
+                 {debounced ? 'Nenhum paciente encontrado' : 'Sua lista está vazia'}
+              </Text>
               <Text
                 style={{
                   ...typography.small,
                   textAlign: 'center',
-                  paddingHorizontal: spacing(2.5),
+                  paddingHorizontal: spacing(4),
+                  maxWidth: 300
                 }}
               >
                 {debounced
-                  ? 'Tente outro termo de busca.'
-                  : 'Cadastre o primeiro paciente para começar.'}
+                  ? 'Tente buscar por outro nome ou diagnóstico.'
+                  : 'Cadastre seu primeiro paciente para começar a gerenciar os tratamentos.'}
               </Text>
-            </Card>
+            </View>
           }
           renderItem={({ item }) => (
             <Card style={{ paddingVertical: spacing(1.5) }}>

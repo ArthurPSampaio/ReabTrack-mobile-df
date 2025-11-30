@@ -10,7 +10,7 @@ import { listAgendaRange, updateSessao } from '../../services/api/agenda';
 
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
-import { typography, spacing } from '../../theme/tokens';
+import { typography, spacing, radius } from '../../theme/tokens';
 import { colors } from '../../theme/colors';
 
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -25,6 +25,17 @@ const STATUS_LABEL: Record<StatusSessao, string> = {
   canceled: 'Cancelada',
   no_show: 'Faltou',
 };
+
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h < 12) return 'Bom dia';
+  if (h < 18) return 'Boa tarde';
+  return 'Boa noite';
+}
+
+function getTodayString() {
+  return new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
+}
 
 function formatHourRange(inicioISO: string, fimISO: string) {
   const i = new Date(inicioISO);
@@ -79,7 +90,8 @@ export default function DashboardScreen({ navigation }: Props) {
     queryKey: ['pacientes', 'dashboard'],
     queryFn: () => listPacientes(),
   });
-  const recentes = (pacientesQ.data || []).slice(0, 5);
+  // Pega apenas os 3 últimos para não poluir demais
+  const recentes = (pacientesQ.data || []).slice(0, 3);
 
   const agendaQ = useQuery({
     queryKey: ['agenda', 'next7'],
@@ -107,148 +119,144 @@ export default function DashboardScreen({ navigation }: Props) {
       <SafeAreaView
         edges={['top']}
         style={{
-          paddingHorizontal: spacing(2),
-          paddingTop: spacing(1),
-          paddingBottom: spacing(1.5),
-          borderBottomWidth: 1,
-          borderBottomColor: colors.line,
-          gap: 4,
-          backgroundColor: colors.background,
+          backgroundColor: colors.surface,
+          paddingBottom: spacing(1),
         }}
       >
-        <Text style={[typography.h1]}>Início</Text>
-        <Text style={typography.small}>Atalhos e visão rápida para começar o dia.</Text>
+        <View style={{ paddingHorizontal: spacing(2), paddingTop: spacing(1), gap: 4 }}>
+          <Text style={{ fontSize: 14, color: colors.textMuted, textTransform: 'capitalize' }}>
+            {getTodayString()}
+          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+             <Text style={[typography.h1, { color: colors.primaryDark }]}>
+               {getGreeting()}, Fisioterapeuta
+             </Text>
+             <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primary, alignItems:'center', justifyContent:'center' }}>
+                <MaterialCommunityIcons name="doctor" size={24} color="white" />
+             </View>
+          </View>
+        </View>
       </SafeAreaView>
 
       <FlatList
         data={[{ key: 'conteudo' }]}
         keyExtractor={(i) => i.key}
-        contentContainerStyle={{ padding: spacing(2), gap: spacing(1.5), paddingBottom: spacing(3) }}
+        contentContainerStyle={{ padding: spacing(2), gap: spacing(2), paddingBottom: spacing(4) }}
         renderItem={() => (
-          <View style={{ gap: spacing(1.5) }}>
-            <Card style={{ gap: spacing(1.25) }}>
-              <Text style={[typography.h2]}>Ações rápidas</Text>
-              <View style={{ flexDirection: 'row', gap: spacing(1.25) }}>
-                <Button
-                  title="Novo paciente"
-                  onPress={() => navigation.navigate('PatientNew')}
-                  style={{ flex: 1 }}
-                />
-                <Button
-                  title="Ver pacientes"
-                  variant="outline"
-                  onPress={() => navigation.navigate('PatientsList')}
-                  style={{ flex: 1 }}
-                />
-              </View>
-            </Card>
+          <View style={{ gap: spacing(2) }}>
+            
+            {/* Atalhos Rápidos */}
+            <View style={{ flexDirection: 'row', gap: spacing(1.5) }}>
+              <TouchableOpacity 
+                 onPress={() => navigation.navigate('PatientNew')}
+                 style={{ flex: 1, backgroundColor: colors.background, padding: spacing(1.5), borderRadius: radius.md, gap: 8, flexDirection:'row', alignItems:'center', elevation: 2, shadowColor: '#000', shadowOpacity:0.05, shadowRadius:4, shadowOffset:{width:0, height:2} }}
+              >
+                 <View style={{ width:36, height:36, borderRadius:18, backgroundColor: colors.primaryLight, alignItems:'center', justifyContent:'center' }}>
+                    <MaterialCommunityIcons name="account-plus" size={20} color={colors.primary} />
+                 </View>
+                 <Text style={{ fontWeight:'600', color: colors.text }}>Novo Paciente</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                 onPress={() => navigation.navigate('PatientsList')}
+                 style={{ flex: 1, backgroundColor: colors.background, padding: spacing(1.5), borderRadius: radius.md, gap: 8, flexDirection:'row', alignItems:'center', elevation: 2, shadowColor: '#000', shadowOpacity:0.05, shadowRadius:4, shadowOffset:{width:0, height:2} }}
+              >
+                 <View style={{ width:36, height:36, borderRadius:18, backgroundColor: '#F4EAD9', alignItems:'center', justifyContent:'center' }}>
+                    <MaterialCommunityIcons name="account-group" size={20} color={colors.brown} />
+                 </View>
+                 <Text style={{ fontWeight:'600', color: colors.text }}>Meus Pacientes</Text>
+              </TouchableOpacity>
+            </View>
 
-            <Card style={{ gap: spacing(1.25) }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing(1) }}>
-                <MaterialCommunityIcons name="calendar-clock" size={20} color={colors.text} />
-                <Text style={[typography.h2]}>Próximas sessões (7 dias)</Text>
-              </View>
+            {/* --- SEÇÃO ADICIONADA: PACIENTES RECENTES --- */}
+            <View style={{ gap: spacing(1) }}>
+               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 4 }}>
+                  <Text style={[typography.h3]}>Pacientes recentes</Text>
+                  <TouchableOpacity onPress={() => navigation.navigate('PatientsList')}>
+                    <Text style={{ color: colors.primary, fontWeight: '600', fontSize: 14 }}>Ver todos</Text>
+                  </TouchableOpacity>
+               </View>
 
+               {pacientesQ.isLoading ? (
+                  <Text style={typography.small}>Carregando...</Text>
+               ) : recentes.length === 0 ? (
+                  <Card style={{ alignItems: 'center', paddingVertical: spacing(2) }}>
+                     <Text style={typography.small}>Nenhum paciente cadastrado.</Text>
+                  </Card>
+               ) : (
+                  <Card style={{ padding: 0, overflow: 'hidden' }}>
+                    {recentes.map((p, index) => (
+                      <TouchableOpacity
+                        key={p.id}
+                        activeOpacity={0.7}
+                        onPress={() => navigation.navigate('PatientDetail', { id: p.id, nome: p.nome })}
+                        style={{
+                          padding: spacing(1.5),
+                          borderBottomWidth: index < recentes.length - 1 ? 1 : 0,
+                          borderBottomColor: colors.line,
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 12
+                        }}
+                      >
+                        <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' }}>
+                           <MaterialCommunityIcons name="account" size={20} color={colors.textMuted} />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                           <Text style={{ fontWeight: '600', color: colors.text }}>{p.nome}</Text>
+                           {!!p.diagnostico && <Text style={{ fontSize: 12, color: colors.textMuted }} numberOfLines={1}>{p.diagnostico}</Text>}
+                        </View>
+                        <MaterialCommunityIcons name="chevron-right" size={20} color={colors.placeholder} />
+                      </TouchableOpacity>
+                    ))}
+                  </Card>
+               )}
+            </View>
+
+            {/* Agenda */}
+            <View style={{ gap: spacing(1) }}>
+              <Text style={[typography.h3]}>Próximas sessões</Text>
+              
               {agendaQ.isLoading ? (
-                <Text style={typography.small}>Carregando…</Text>
+                <Text style={typography.small}>Carregando agenda...</Text>
               ) : (agendaQ.data || []).length === 0 ? (
-                <Text style={typography.small}>Sem sessões neste período.</Text>
+                <Card style={{ alignItems: 'center', paddingVertical: spacing(3), gap: spacing(1) }}>
+                   <MaterialCommunityIcons name="calendar-check" size={40} color={colors.line} />
+                   <Text style={typography.small}>Nenhuma sessão agendada para os próximos 7 dias.</Text>
+                </Card>
               ) : (
-                <View style={{ gap: spacing(1.75) }}>
+                <View style={{ gap: spacing(1.5) }}>
                   {grouped.map(({ key, y, m, d, items }) => {
                     const label = formatDayLabelLocal(y, m, d);
                     return (
                       <View key={key} style={{ gap: spacing(1) }}>
-                        <Text style={{ fontWeight: '700', color: colors.primaryDark, fontSize: 16 }}>{label}</Text>
-
+                        <Text style={{ fontWeight: '700', color: colors.textMuted, fontSize: 14, marginLeft: 4 }}>{label}</Text>
                         {items.map((s) => {
                           const hour = formatHourRange(s.inicio, s.fim);
                           const pacienteNome = (s as any)?.paciente?.nome;
                           const pacienteId = (s as any).pacienteId ?? (s as any)?.paciente?.id;
-
                           return (
-                            <View
+                            <TouchableOpacity
                               key={s.id}
-                              style={{
-                                borderWidth: 1,
-                                borderColor: colors.line,
-                                borderRadius: 12,
-                                padding: spacing(1.25),
-                                backgroundColor: colors.background,
-                                gap: spacing(0.75),
-                              }}
+                              activeOpacity={0.9}
+                              onPress={() => pacienteId && navigation.navigate('PatientDetail', { id: pacienteId, nome: pacienteNome })}
                             >
-                              <View
-                                style={{
-                                  flexDirection: 'row',
-                                  alignItems: 'center',
-                                  justifyContent: 'space-between',
-                                }}
-                              >
-                                <Text style={typography.h3}>{hour}</Text>
-
-                                <View
-                                  style={{
-                                    paddingHorizontal: 10,
-                                    paddingVertical: 4,
-                                    borderRadius: 999,
-                                    backgroundColor:
-                                      s.status === 'scheduled'
-                                        ? colors.line
-                                        : s.status === 'completed'
-                                        ? '#E4F4EC'
-                                        : s.status === 'canceled'
-                                        ? '#FBEAEB'
-                                        : '#FFF3E0',
-                                  }}
-                                >
-                                  <Text
-                                    style={{
-                                      fontSize: 12,
-                                      fontWeight: '600',
-                                      color:
-                                        s.status === 'scheduled'
-                                          ? colors.textMuted
-                                          : s.status === 'completed'
-                                          ? colors.success
-                                          : s.status === 'canceled'
-                                          ? colors.danger
-                                          : '#E65100',
-                                    }}
-                                  >
-                                    {STATUS_LABEL[s.status]}
-                                  </Text>
-                                </View>
-                              </View>
-
-                              {!!pacienteNome && (
-                                <Text style={typography.body} numberOfLines={1}>
-                                  {pacienteNome}
-                                </Text>
-                              )}
-                              <Text style={typography.small}>{s.local || 'Sem local'}</Text>
-
-                              <View style={{ flexDirection: 'row', gap: spacing(1), marginTop: spacing(0.75) }}>
-                                <Button
-                                  title="Abrir paciente"
-                                  variant="outline"
-                                  onPress={() =>
-                                    navigation.navigate('PatientDetail', {
-                                      id: pacienteId,
-                                      nome: pacienteNome,
-                                    })
-                                  }
-                                  style={{ flex: 1, paddingVertical: spacing(1) }}
-                                />
-                                {s.status !== 'completed' && (
-                                  <Button
-                                    title="Concluir"
-                                    onPress={() => updSessaoMut.mutate({ id: s.id, status: 'completed' })}
-                                    style={{ flex: 1, paddingVertical: spacing(1) }}
-                                  />
-                                )}
-                              </View>
-                            </View>
+                              <Card style={{ flexDirection: 'row', padding: spacing(1.5), gap: spacing(1.5), alignItems:'center' }}>
+                                 <View style={{ width: 4, height: 40, backgroundColor: s.status === 'completed' ? colors.success : colors.primary, borderRadius: 2 }} />
+                                 <View style={{ flex: 1, gap: 2 }}>
+                                    <Text style={{ fontWeight: '700', fontSize: 16 }}>{pacienteNome || 'Paciente'}</Text>
+                                    <Text style={{ fontSize: 13, color: colors.textMuted }}>{hour} • {s.local || 'Consultório'}</Text>
+                                 </View>
+                                 {s.status !== 'completed' && (
+                                   <TouchableOpacity 
+                                     onPress={() => updSessaoMut.mutate({ id: s.id, status: 'completed' })}
+                                     style={{ padding: 8 }}
+                                   >
+                                      <MaterialCommunityIcons name="check-circle-outline" size={24} color={colors.textMuted} />
+                                   </TouchableOpacity>
+                                 )}
+                              </Card>
+                            </TouchableOpacity>
                           );
                         })}
                       </View>
@@ -256,52 +264,7 @@ export default function DashboardScreen({ navigation }: Props) {
                   })}
                 </View>
               )}
-            </Card>
-
-            <Card style={{ gap: spacing(1.25) }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing(1) }}>
-                <MaterialCommunityIcons name="account-group" size={20} color={colors.text} />
-                <Text style={[typography.h2]}>Pacientes recentes</Text>
-              </View>
-
-              {pacientesQ.isLoading ? (
-                <Text style={typography.small}>Carregando…</Text>
-              ) : recentes.length === 0 ? (
-                <Text style={typography.small}>Sem pacientes cadastrados ainda.</Text>
-              ) : (
-                <View style={{ gap: spacing(1) }}>
-                  {recentes.map((p) => (
-                    <TouchableOpacity
-                      key={p.id}
-                      activeOpacity={0.8}
-                      onPress={() => navigation.navigate('PatientDetail', { id: p.id, nome: p.nome })}
-                      style={{
-                        paddingVertical: spacing(1),
-                        borderBottomWidth: 1,
-                        borderBottomColor: colors.line,
-                      }}
-                    >
-                      <Text style={typography.h3} numberOfLines={1}>
-                        {p.nome}
-                      </Text>
-                      {!!p.diagnostico && (
-                        <Text style={typography.small} numberOfLines={1}>
-                          {p.diagnostico}
-                        </Text>
-                      )}
-                    </TouchableOpacity>
-                  ))}
-
-                  <View style={{ marginTop: spacing(0.75) }}>
-                    <Button
-                      title="Ver todos"
-                      variant="outline"
-                      onPress={() => navigation.navigate('PatientsList')}
-                    />
-                  </View>
-                </View>
-              )}
-            </Card>
+            </View>
           </View>
         )}
       />

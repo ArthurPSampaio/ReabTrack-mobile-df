@@ -1,6 +1,7 @@
 import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "./types";
+import { colors } from "../theme/colors"; 
 
 import PatientsListScreen from "../screens/Patients/PatientsListScreen";
 import PatientNewScreen from "../screens/Patients/PatientNewScreen";
@@ -13,7 +14,15 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function RootNavigator() {
   return (
-    <Stack.Navigator initialRouteName="Dashboard">
+    <Stack.Navigator 
+      initialRouteName="Dashboard"
+      screenOptions={{
+        headerStyle: { backgroundColor: colors.background },
+        headerTintColor: colors.text,
+        headerTitleStyle: { fontWeight: 'bold' },
+        headerShadowVisible: false, 
+      }}
+    >
       <Stack.Screen
         name="PatientsList"
         component={PatientsListScreen}
@@ -27,7 +36,7 @@ export default function RootNavigator() {
       <Stack.Screen
         name="PatientDetail"
         component={PatientDetailScreen}
-        options={{ headerShown: false }}
+        options={{ headerShown: true, title: '' }}
       />
       <Stack.Screen
         name="PlanDetail"
