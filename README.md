@@ -6,30 +6,31 @@
 
 > **O companheiro digital do Fisioterapeuta.**
 
-Este é o cliente mobile do projeto **ReabTrack**, desenvolvido como Trabalho de Conclusão de Curso (TCC) em Ciência da Computação. O aplicativo serve como a interface principal para gestão de pacientes, planos de reabilitação e visualização de relatórios inteligentes.
+Este é o aplicativo móvel do projeto **ReabTrack**, desenvolvido como Trabalho de Conclusão de Curso (TCC) em Ciência da Computação. Ele serve como a interface principal para que fisioterapeutas gerenciem pacientes, planos de reabilitação e acompanhem a evolução clínica com suporte de Inteligência Artificial.
 
-## ✨ Funcionalidades Principais
+## ✨ O que ele faz?
 
-* **Gestão Completa:** CRUD de Pacientes e Planos de Tratamento.
-* **Prontuário Digital:** Registro de sessões com notas SOAP (Subjetivo, Objetivo, Avaliação, Plano).
-* **Visualização de Dados:** Gráficos interativos de evolução (Dor vs. Esforço) utilizando `react-native-chart-kit`.
-* **Laudos Inteligentes:** Geração e exportação de relatórios clínicos em **PDF** formatado profissionalmente, alimentados pela IA do sistema.
-* **UX Otimizada:** Interface limpa, feedbacks visuais e navegação fluida.
+* **Prontuário Digital:** Registre sessões com notas SOAP e avaliações de dor/esforço em segundos.
+* **Visualização de Dados:** Acompanhe o progresso do paciente através de **gráficos interativos** de evolução.
+* **Laudos Inteligentes:** Gere e exporte relatórios clínicos completos em **PDF**, formatados automaticamente e prontos para assinatura.
+* **Gestão na Palma da Mão:** Controle total de pacientes, planos de tratamento e agendamentos.
 
-## 🛠️ Tecnologias Utilizadas
+## 🛠️ Por baixo do capô
 
-* **Core:** React Native (via Expo SDK 51)
-* **Linguagem:** TypeScript
-* **Gerenciamento de Estado:** TanStack Query (React Query)
-* **Navegação:** React Navigation (Stack & Tabs)
-* **Ferramentas:** Expo Print (PDF), Expo Sharing, Async Storage.
+O projeto foi construído com foco em performance e experiência do usuário (UX):
+
+* **Core:** React Native com Expo (SDK 51).
+* **Linguagem:** TypeScript para tipagem estática e segurança.
+* **Estado e Cache:** TanStack Query (React Query) para sincronização de dados eficiente.
+* **Navegação:** React Navigation (Stack & Tabs).
+* **Recursos Nativos:** `expo-print` para geração de PDF e `react-native-chart-kit` para visualização de dados.
 
 ## 🚀 Como Rodar
 
 1.  **Clone o repositório:**
     ```bash
-    git clone [https://github.com/seu-usuario/reabtrack-mobile.git](https://github.com/seu-usuario/reabtrack-mobile.git)
-    cd reabtrack-mobile
+    git clone [https://github.com/ArthurPSampaio/ReabTrack-mobile-df.git](https://github.com/ArthurPSampaio/ReabTrack-mobile-df.git)
+    cd ReabTrack-mobile-df
     ```
 
 2.  **Instale as dependências:**
@@ -38,7 +39,7 @@ Este é o cliente mobile do projeto **ReabTrack**, desenvolvido como Trabalho de
     ```
 
 3.  **Configure o Ambiente:**
-    Crie um arquivo `.env` na raiz com o endereço do seu backend:
+    Crie um arquivo `.env` na raiz (baseado no IP da sua máquina):
     ```env
     EXPO_PUBLIC_API_URL=http://SEU_IP_LOCAL:3000
     ```
@@ -47,7 +48,13 @@ Este é o cliente mobile do projeto **ReabTrack**, desenvolvido como Trabalho de
     ```bash
     npx expo start
     ```
-    *Use o app Expo Go no seu celular ou um emulador Android/iOS.*
+    *Escaneie o QR Code com o app Expo Go (Android/iOS).*
+
+## 🔗 Ecossistema
+
+Este app funciona em conjunto com:
+* **Backend:** [reabtrack-backend](https://github.com/ArthurPSampaio/reabtrack-backend)
+* **Inteligência Artificial:** [reabtrack-ai](https://github.com/ArthurPSampaio/reabtrack-ai)
 
 ---
 Desenvolvido por **Arthur Sampaio** | TCC 2025
