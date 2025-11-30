@@ -5,9 +5,13 @@ import {
   FlatList,
   Alert,
   TouchableOpacity,
+  Modal,
+  ScrollView,
+  Platform,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Feather } from '@expo/vector-icons';
+import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getPlanoById, saveAtividades, updatePlano } from '../../services/api/plans';
 
@@ -20,11 +24,10 @@ import { colors } from '../../theme/colors';
 
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
-import { AtividadeDto, StatusPlano, TipoAtividade } from '../../types/dto'; // Importe Enums
+import { AtividadeDto, StatusPlano, TipoAtividade } from '../../types/dto';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PlanDetail'>;
 
-// Use os Enums
 const TIPOS: TipoAtividade[] = [
   TipoAtividade.FORTALECIMENTO,
   TipoAtividade.ALONGAMENTO,
@@ -48,8 +51,8 @@ export default function PlanDetailScreen({ route, navigation }: Props) {
     queryFn: () => getPlanoById(planId),
   });
 
+  const [modalVisible, setModalVisible] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
-  // Defina o tipo padrão usando o Enum
   const [form, setForm] = useState<AtividadeDto>({ nome: '', tipo: TipoAtividade.FORTALECIMENTO });
   const setCampo = (k: keyof AtividadeDto, v: any) =>
     setForm((s) => ({ ...s, [k]: v }));
@@ -59,8 +62,7 @@ export default function PlanDetailScreen({ route, navigation }: Props) {
   const saveMut = useMutation({
     mutationFn: (ativs: AtividadeDto[]) => saveAtividades(planId, ativs),
     onSuccess: async () => {
-      setForm({ nome: '', tipo: TipoAtividade.FORTALECIMENTO });
-      setEditingIndex(null);
+      closeModal();
       await qc.invalidateQueries({ queryKey: ['plano', planId] });
       await qc.invalidateQueries({ queryKey: ['planos'] });
     },
@@ -75,7 +77,7 @@ export default function PlanDetailScreen({ route, navigation }: Props) {
   });
 
   const updateStatus = useMutation({
-    mutationFn: (s: StatusPlano) => // Use o Enum
+    mutationFn: (s: StatusPlano) =>
       updatePlano(planId, { status: s }),
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ['plano', planId] });
@@ -90,6 +92,18 @@ export default function PlanDetailScreen({ route, navigation }: Props) {
     },
   });
 
+  const closeModal = () => {
+    setEditingIndex(null);
+    setForm({ nome: '', tipo: TipoAtividade.FORTALECIMENTO });
+    setModalVisible(false);
+  }
+
+  const onAddPress = () => {
+    setEditingIndex(null);
+    setForm({ nome: '', tipo: TipoAtividade.FORTALECIMENTO });
+    setModalVisible(true);
+  }
+
   const handleAdd = () => {
     if (!form.nome.trim()) {
       Alert.alert('Atenção', 'Informe o nome da atividade.');
@@ -101,6 +115,7 @@ export default function PlanDetailScreen({ route, navigation }: Props) {
   const handleEditStart = (idx: number) => {
     setEditingIndex(idx);
     setForm(atividades[idx]);
+    setModalVisible(true);
   };
 
   const handleEditConfirm = () => {
@@ -185,7 +200,7 @@ export default function PlanDetailScreen({ route, navigation }: Props) {
 
           <View style={{ marginTop: spacing(0.75) }}>
             <StatusBadge
-              status={plano.status} // Agora está corretamente tipado
+              status={plano.status}
             />
           </View>
 
@@ -215,164 +230,188 @@ export default function PlanDetailScreen({ route, navigation }: Props) {
         </View>
       </SafeAreaView>
 
-      <FlatList
-        data={atividades}
-        keyExtractor={(_, i) => String(i)}
-        contentContainerStyle={{ padding: spacing(2), gap: spacing(1.5), paddingBottom: spacing(4) }}
-        ListHeaderComponent={
-          <Card style={{ gap: spacing(1.25), marginBottom: spacing(1.5) }}>
-            <Text style={[typography.h2]}>
-              {editingIndex === null ? 'Adicionar atividade' : 'Editar atividade'}
-            </Text>
-
-            <Input
-              placeholder="Nome *"
-              value={form.nome}
-              onChangeText={(t) => setCampo('nome', t)}
-            />
-            <Input
-              placeholder="Descrição"
-              value={form.descricao || ''}
-              onChangeText={(t) => setCampo('descricao', t)}
-            />
-
-            <View style={{ flexDirection: 'row', gap: spacing(1) }}>
-              <Input
-                placeholder="Séries"
-                keyboardType="numeric"
-                value={form.series ? String(form.series) : ''}
-                onChangeText={(t) => setCampo('series', Number(t || 0))}
-                style={{ flex: 1 }}
-              />
-              <Input
-                placeholder="Repetições"
-                keyboardType="numeric"
-                value={form.repeticoes ? String(form.repeticoes) : ''}
-                onChangeText={(t) => setCampo('repeticoes', Number(t || 0))}
-                style={{ flex: 1 }}
-              />
+      <View style={{ flex: 1 }}>
+        <FlatList
+          data={atividades}
+          keyExtractor={(_, i) => String(i)}
+          contentContainerStyle={{ padding: spacing(2), gap: spacing(1.5), paddingBottom: spacing(4) }}
+          ListHeaderComponent={
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+               <Text style={[typography.h2]}>Atividades</Text>
+               <TouchableOpacity
+                  onPress={onAddPress}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 4,
+                    backgroundColor: colors.primary,
+                    paddingHorizontal: 12,
+                    paddingVertical: 8,
+                    borderRadius: radius.md,
+                  }}
+                >
+                  <MaterialCommunityIcons name="plus" size={20} color={colors.white} />
+                  <Text style={{ color: colors.white, fontWeight: '700' }}>Adicionar</Text>
+                </TouchableOpacity>
             </View>
+          }
+          ListEmptyComponent={
+            <Text style={{ textAlign: 'center', ...typography.small, marginTop: 20 }}>
+              Nenhuma atividade cadastrada.
+            </Text>
+          }
+          renderItem={({ item, index }) => (
+            <Card>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
+              >
+                <View style={{ flex: 1, gap: spacing(0.75) }}>
+                  <Text style={typography.h3}>
+                    {item.nome}
+                    {item.tipo ? ` • ${item.tipo}` : ''}
+                  </Text>
+                  {!!item.descricao && <Text style={typography.body}>{item.descricao}</Text>}
+                  <Text style={typography.small}>
+                    {item.series ? `Séries: ${item.series}` : ''}
+                    {item.repeticoes ? ` • Reps: ${item.repeticoes}` : ''}
+                    {item.frequencia ? ` • ${item.frequencia}` : ''}
+                  </Text>
+                  {!!item.observacoes && (
+                    <Text style={typography.small}>
+                      Obs: {item.observacoes}
+                    </Text>
+                  )}
+                </View>
 
-            <Input
-              placeholder="Frequência (ex.: 3x/semana)"
-              value={form.frequencia || ''}
-              onChangeText={(t) => setCampo('frequencia', t)}
-            />
-            <Input
-              placeholder="Observações"
-              value={form.observacoes || ''}
-              onChangeText={(t) => setCampo('observacoes', t)}
-            />
-
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing(1) }}>
-              {TIPOS.map((t) => {
-                const active = form.tipo === t;
-                return (
+                <View style={{ flexDirection: 'row', gap: spacing(1.5), marginLeft: spacing(1) }}>
                   <TouchableOpacity
-                    key={t}
-                    onPress={() => setCampo('tipo', t)}
+                    onPress={() => handleEditStart(index)}
                     style={{
-                      paddingHorizontal: spacing(1.5),
-                      paddingVertical: spacing(1),
-                      borderWidth: 1.5,
-                      borderColor: active ? colors.primary : colors.line,
-                      borderRadius: 999,
-                      backgroundColor: active ? colors.primary : colors.background,
+                      padding: spacing(1.25),
+                      borderRadius: radius.md,
+                      backgroundColor: colors.surface,
                     }}
                   >
-                    <Text style={{ color: active ? colors.white : colors.text, fontWeight: '600' }}>
-                      {t}
-                    </Text>
+                    <Feather name="edit-3" size={20} color={colors.text} />
                   </TouchableOpacity>
-                );
-              })}
-            </View>
+                  <TouchableOpacity
+                    onPress={() => handleRemove(index)}
+                    style={{
+                      padding: spacing(1.25),
+                      borderRadius: radius.md,
+                      backgroundColor: '#FBEAEB',
+                    }}
+                  >
+                    <Feather name="trash-2" size={20} color={colors.danger} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </Card>
+          )}
+        />
+      </View>
 
-            {editingIndex === null ? (
-              <Button
-                title={saveMut.isPending ? 'Adicionando...' : 'Adicionar atividade'}
-                onPress={handleAdd}
-                disabled={saveMut.isPending}
+      <Modal
+        visible={modalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={closeModal}
+      >
+         <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: spacing(2) }}
+        >
+          <Card style={{ gap: spacing(1.25), maxHeight: '90%' }}>
+            <ScrollView contentContainerStyle={{ gap: spacing(1.25) }}>
+              <Text style={[typography.h2, { textAlign: 'center', marginBottom: spacing(1) }]}>
+                {editingIndex === null ? 'Adicionar atividade' : 'Editar atividade'}
+              </Text>
+
+              <Input
+                placeholder="Nome *"
+                value={form.nome}
+                onChangeText={(t) => setCampo('nome', t)}
               />
-            ) : (
-              <View style={{ flexDirection: 'row', gap: spacing(1.25) }}>
-                <Button
-                  title={saveMut.isPending ? 'Salvando...' : 'Salvar edição'}
-                  onPress={handleEditConfirm}
-                  disabled={saveMut.isPending}
+              <Input
+                placeholder="Descrição"
+                value={form.descricao || ''}
+                onChangeText={(t) => setCampo('descricao', t)}
+              />
+
+              <View style={{ flexDirection: 'row', gap: spacing(1) }}>
+                <Input
+                  placeholder="Séries"
+                  keyboardType="numeric"
+                  value={form.series ? String(form.series) : ''}
+                  onChangeText={(t) => setCampo('series', Number(t || 0))}
                   style={{ flex: 1 }}
                 />
-                <Button
-                  title="Cancelar"
-                  variant="outline"
-                  onPress={() => {
-                    setEditingIndex(null);
-                    setForm({ nome: '', tipo: TipoAtividade.FORTALECIMENTO });
-                  }}
+                <Input
+                  placeholder="Repetições"
+                  keyboardType="numeric"
+                  value={form.repeticoes ? String(form.repeticoes) : ''}
+                  onChangeText={(t) => setCampo('repeticoes', Number(t || 0))}
                   style={{ flex: 1 }}
                 />
-              </View>
-            )}
-          </Card>
-        }
-        ListEmptyComponent={
-          <Text style={{ textAlign: 'center', ...typography.small }}>
-            Nenhuma atividade cadastrada.
-          </Text>
-        }
-        renderItem={({ item, index }) => (
-          <Card>
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-            >
-              <View style={{ flex: 1, gap: spacing(0.75) }}>
-                <Text style={typography.h3}>
-                  {item.nome}
-                  {item.tipo ? ` • ${item.tipo}` : ''}
-                </Text>
-                {!!item.descricao && <Text style={typography.body}>{item.descricao}</Text>}
-                <Text style={typography.small}>
-                  {item.series ? `Séries: ${item.series}` : ''}
-                  {item.repeticoes ? ` • Reps: ${item.repeticoes}` : ''}
-                  {item.frequencia ? ` • ${item.frequencia}` : ''}
-                </Text>
-                {!!item.observacoes && (
-                  <Text style={typography.small}>
-                    Obs: {item.observacoes}
-                  </Text>
-                )}
               </View>
 
-              <View style={{ flexDirection: 'row', gap: spacing(1.5), marginLeft: spacing(1) }}>
-                <TouchableOpacity
-                  onPress={() => handleEditStart(index)}
-                  style={{
-                    padding: spacing(1.25),
-                    borderRadius: radius.md,
-                    backgroundColor: colors.surface,
-                  }}
-                >
-                  <Feather name="edit-3" size={20} color={colors.text} />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => handleRemove(index)}
-                  style={{
-                    padding: spacing(1.25),
-                    borderRadius: radius.md,
-                    backgroundColor: '#FBEAEB',
-                  }}
-                >
-                  <Feather name="trash-2" size={20} color={colors.danger} />
-                </TouchableOpacity>
+              <Input
+                placeholder="Frequência (ex.: 3x/semana)"
+                value={form.frequencia || ''}
+                onChangeText={(t) => setCampo('frequencia', t)}
+              />
+              <Input
+                placeholder="Observações"
+                value={form.observacoes || ''}
+                onChangeText={(t) => setCampo('observacoes', t)}
+              />
+
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing(1) }}>
+                {TIPOS.map((t) => {
+                  const active = form.tipo === t;
+                  return (
+                    <TouchableOpacity
+                      key={t}
+                      onPress={() => setCampo('tipo', t)}
+                      style={{
+                        paddingHorizontal: spacing(1.5),
+                        paddingVertical: spacing(1),
+                        borderWidth: 1.5,
+                        borderColor: active ? colors.primary : colors.line,
+                        borderRadius: 999,
+                        backgroundColor: active ? colors.primary : colors.background,
+                      }}
+                    >
+                      <Text style={{ color: active ? colors.white : colors.text, fontWeight: '600' }}>
+                        {t}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
-            </View>
+
+              <View style={{ flexDirection: 'row', gap: spacing(1.25), marginTop: spacing(1) }}>
+                 <Button
+                    title={saveMut.isPending ? 'Salvando...' : (editingIndex === null ? 'Adicionar' : 'Salvar')}
+                    onPress={editingIndex === null ? handleAdd : handleEditConfirm}
+                    disabled={saveMut.isPending}
+                    style={{ flex: 1 }}
+                  />
+                  <Button
+                    title="Cancelar"
+                    variant="outline"
+                    onPress={closeModal}
+                    style={{ flex: 1 }}
+                  />
+              </View>
+            </ScrollView>
           </Card>
-        )}
-      />
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 }

@@ -7,12 +7,15 @@ import {
   RefreshControl,
   TouchableOpacity,
   Platform,
+  Modal,
+  ScrollView,
 } from 'react-native';
 import DateTimePicker, {
   DateTimePickerAndroid,
   DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import type { CompositeScreenProps } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -122,6 +125,7 @@ export default function PatientSessionsTab({ route }: Props) {
     queryFn: () => listAgenda({ pacienteId: id }),
   });
 
+  const [modalVisible, setModalVisible] = useState(false);
   const [inicio, setInicio] = useState<Date | undefined>(undefined);
   const [fim, setFim] = useState<Date | undefined>(undefined);
   const [showInicioIOS, setShowInicioIOS] = useState(false);
@@ -130,13 +134,19 @@ export default function PatientSessionsTab({ route }: Props) {
   const [observacoes, setObservacoes] = useState('');
   const [planoId, setPlanoId] = useState<string | null>(null);
 
+  const resetForm = () => {
+    setInicio(undefined);
+    setFim(undefined);
+    setLocal('');
+    setObservacoes('');
+    setPlanoId(null);
+    setModalVisible(false);
+  };
+
   const createMut = useMutation({
     mutationFn: createSessao,
     onSuccess: async () => {
-      setInicio(undefined);
-      setFim(undefined);
-      setLocal('');
-      setObservacoes('');
+      resetForm();
       await qc.invalidateQueries({ queryKey: ['agenda', id] });
     },
     onError: (e: any) => {
@@ -182,11 +192,7 @@ export default function PatientSessionsTab({ route }: Props) {
       await qc.invalidateQueries({ queryKey: ['agenda', id] });
     },
     onError: (e: any) => {
-      const msg =
-        e?.response?.data?.message?.join?.('\n') ||
-        e?.response?.data?.message ||
-        e?.message ||
-        'Falha ao atualizar sessão';
+      const msg = e?.response?.data?.message || e?.message || 'Falha ao atualizar';
       Alert.alert('Erro', String(msg));
     },
   });
@@ -209,129 +215,42 @@ export default function PatientSessionsTab({ route }: Props) {
     ]);
   };
 
-  const ListHeader = (
-    <View style={{ gap: spacing(1.5) }}>
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.surface }}>
       <View
         style={{
+          paddingHorizontal: spacing(2),
           paddingVertical: spacing(1.5),
           borderBottomWidth: 1,
           borderBottomColor: colors.line,
           backgroundColor: colors.background,
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
         }}
       >
         <Text style={[typography.h1]}>Sessões</Text>
+        <TouchableOpacity
+          onPress={() => setModalVisible(true)}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 4,
+            backgroundColor: colors.primary,
+            paddingHorizontal: 12,
+            paddingVertical: 8,
+            borderRadius: radius.md,
+          }}
+        >
+          <MaterialCommunityIcons name="plus" size={20} color={colors.white} />
+          <Text style={{ color: colors.white, fontWeight: '700' }}>Agendar</Text>
+        </TouchableOpacity>
       </View>
 
-      <Card style={{ gap: spacing(1.25) }}>
-        <Text style={[typography.h2]}>Agendar sessão</Text>
-
-        <View style={{ gap: spacing(0.75) }}>
-          <Text style={{ fontWeight: '600', color: colors.text }}>Início</Text>
-          <Button
-            title={formatDateTime(inicio)}
-            variant="outline"
-            onPress={() => {
-              if (Platform.OS === 'android') {
-                pickDateTimeAndroid(inicio, setInicio);
-              } else {
-                setShowInicioIOS(true);
-              }
-            }}
-          />
-          {Platform.OS === 'ios' && showInicioIOS && (
-            <View style={{ marginTop: spacing(1) }}>
-              <DateTimePicker
-                value={inicio || new Date()}
-                mode="datetime"
-                display="inline"
-                onChange={(_e, d) => d && setInicio(d)}
-              />
-              <View style={{ marginTop: spacing(1) }}>
-                <Button title="Concluir" onPress={() => setShowInicioIOS(false)} />
-              </View>
-            </View>
-          )}
-        </View>
-
-        <View style={{ gap: spacing(0.75) }}>
-          <Text style={{ fontWeight: '600', color: colors.text }}>Fim</Text>
-          <Button
-            title={formatDateTime(fim)}
-            variant="outline"
-            onPress={() => {
-              if (Platform.OS === 'android') {
-                pickDateTimeAndroid(
-                  fim ?? (inicio ? new Date(inicio.getTime() + 60 * 60 * 1000) : undefined),
-                  setFim
-                );
-              } else {
-                setShowFimIOS(true);
-              }
-            }}
-          />
-          {Platform.OS === 'ios' && showFimIOS && (
-            <View style={{ marginTop: spacing(1) }}>
-              <DateTimePicker
-                value={fim || (inicio ? new Date(inicio.getTime() + 60 * 60 * 1000) : new Date())}
-                mode="datetime"
-                display="inline"
-                onChange={(_e, d) => d && setFim(d)}
-              />
-              <View style={{ marginTop: spacing(1) }}>
-                <Button title="Concluir" onPress={() => setShowFimIOS(false)} />
-              </View>
-            </View>
-          )}
-        </View>
-
-        <View style={{ gap: spacing(1) }}>
-          <Text style={{ fontWeight: '600', color: colors.text }}>Plano</Text>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing(1) }}>
-            {(planosQ.data || []).map((pl) => {
-              const active = planoId === pl.id;
-              return (
-                <Chip
-                  key={pl.id}
-                  label={pl.objetivoGeral}
-                  active={active}
-                  onPress={() => setPlanoId(pl.id)}
-                />
-              );
-            })}
-          </View>
-          {!planoId && !!(planosQ.data || []).length && (
-            <Text style={typography.small}>Selecione um plano.</Text>
-          )}
-          {!(planosQ.data || []).length && (
-            <Text style={typography.small}>
-              Nenhum plano encontrado para este paciente.
-            </Text>
-          )}
-        </View>
-
-        <Input placeholder="Local (opcional)" value={local} onChangeText={setLocal} />
-        <Input
-          placeholder="Observações (opcional)"
-          value={observacoes}
-          onChangeText={setObservacoes}
-        />
-
-        <Button
-          title={createMut.isPending ? 'Agendando...' : 'Agendar'}
-          onPress={onAgendar}
-          disabled={createMut.isPending}
-        />
-      </Card>
-    </View>
-  );
-
-  return (
-    <View style={{ flex: 1, backgroundColor: colors.surface }}>
       <FlatList
         data={sessoesQ.data || []}
         keyExtractor={(s) => s.id}
         contentContainerStyle={{ padding: spacing(2), gap: spacing(1.5) }}
-        ListHeaderComponent={ListHeader}
         refreshControl={
           <RefreshControl
             refreshing={!!sessoesQ.isRefetching || sessoesQ.isLoading}
@@ -373,18 +292,14 @@ export default function PatientSessionsTab({ route }: Props) {
                 }}
               >
                 <Text style={{ fontWeight: '700', color: colors.text, marginRight: spacing(0.5) }}>Status:</Text>
-                {STATUS.map((s) => {
-                  const active = item.status === s;
-                  return (
+                {STATUS.map((s) => (
                     <Chip
                       key={s}
                       label={labelMap[s]}
-                      active={active}
+                      active={item.status === s}
                       onPress={() => updateMut.mutate({ sessaoId: item.id, dto: { status: s } })}
                     />
-                  );
-                })}
-                
+                ))}
               </View>
               <View style={{ marginTop: spacing(1.5), borderTopWidth: 1, borderTopColor: colors.line, paddingTop: spacing(1.5) }}>
                 <Button title="Remover" variant="outline" onPress={() => onRemover(item.id)} />
@@ -393,6 +308,117 @@ export default function PatientSessionsTab({ route }: Props) {
           );
         }}
       />
+
+      <Modal
+        visible={modalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={resetForm}
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: spacing(2) }}>
+          <Card style={{ gap: spacing(1.25), maxHeight: '90%' }}>
+            <ScrollView contentContainerStyle={{ gap: spacing(1.25) }}>
+              <Text style={[typography.h2, { textAlign: 'center', marginBottom: spacing(1) }]}>Agendar Sessão</Text>
+
+              <View style={{ gap: spacing(0.75) }}>
+                <Text style={{ fontWeight: '600', color: colors.text }}>Início</Text>
+                <Button
+                  title={formatDateTime(inicio)}
+                  variant="outline"
+                  onPress={() => {
+                    if (Platform.OS === 'android') {
+                      pickDateTimeAndroid(inicio, setInicio);
+                    } else {
+                      setShowInicioIOS(true);
+                    }
+                  }}
+                />
+                {Platform.OS === 'ios' && showInicioIOS && (
+                  <View style={{ marginTop: spacing(1) }}>
+                    <DateTimePicker
+                      value={inicio || new Date()}
+                      mode="datetime"
+                      display="inline"
+                      onChange={(_e, d) => d && setInicio(d)}
+                    />
+                    <Button title="Concluir" onPress={() => setShowInicioIOS(false)} />
+                  </View>
+                )}
+              </View>
+
+              <View style={{ gap: spacing(0.75) }}>
+                <Text style={{ fontWeight: '600', color: colors.text }}>Fim</Text>
+                <Button
+                  title={formatDateTime(fim)}
+                  variant="outline"
+                  onPress={() => {
+                    if (Platform.OS === 'android') {
+                      pickDateTimeAndroid(
+                        fim ?? (inicio ? new Date(inicio.getTime() + 60 * 60 * 1000) : undefined),
+                        setFim
+                      );
+                    } else {
+                      setShowFimIOS(true);
+                    }
+                  }}
+                />
+                {Platform.OS === 'ios' && showFimIOS && (
+                  <View style={{ marginTop: spacing(1) }}>
+                    <DateTimePicker
+                      value={fim || (inicio ? new Date(inicio.getTime() + 60 * 60 * 1000) : new Date())}
+                      mode="datetime"
+                      display="inline"
+                      onChange={(_e, d) => d && setFim(d)}
+                    />
+                    <View style={{ marginTop: spacing(1) }}>
+                      <Button title="Concluir" onPress={() => setShowFimIOS(false)} />
+                    </View>
+                  </View>
+                )}
+              </View>
+
+              <View style={{ gap: spacing(1) }}>
+                <Text style={{ fontWeight: '600', color: colors.text }}>Plano</Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing(1) }}>
+                  {(planosQ.data || []).map((pl) => (
+                      <Chip
+                        key={pl.id}
+                        label={pl.objetivoGeral}
+                        active={planoId === pl.id}
+                        onPress={() => setPlanoId(pl.id)}
+                      />
+                  ))}
+                </View>
+                {!planoId && !!(planosQ.data || []).length && (
+                  <Text style={typography.small}>Selecione um plano.</Text>
+                )}
+              </View>
+
+              <Input placeholder="Local (opcional)" value={local} onChangeText={setLocal} />
+              <Input
+                placeholder="Observações (opcional)"
+                value={observacoes}
+                onChangeText={setObservacoes}
+              />
+
+              <View style={{ flexDirection: 'row', gap: 10, marginTop: 8 }}>
+                 <Button
+                    title={createMut.isPending ? 'Agendando...' : 'Agendar'}
+                    onPress={onAgendar}
+                    disabled={createMut.isPending}
+                    style={{ flex: 1 }}
+                 />
+                 <Button
+                    title="Cancelar"
+                    variant="outline"
+                    onPress={resetForm}
+                    style={{ flex: 1 }}
+                 />
+              </View>
+            </ScrollView>
+          </Card>
+        </View>
+      </Modal>
     </View>
   );
 }

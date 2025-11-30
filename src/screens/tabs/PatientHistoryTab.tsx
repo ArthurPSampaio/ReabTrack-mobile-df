@@ -8,10 +8,12 @@ import {
   TouchableOpacity,
   Platform,
   KeyboardAvoidingView,
+  Modal,
+  ScrollView,
 } from 'react-native';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import Slider from '@react-native-community/slider';
-import { Feather } from '@expo/vector-icons';
+import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { listRegistrosByPaciente, createRegistro, updateRegistro, deleteRegistro } from '../../services/api/registros';
 import { listPlanosByPaciente } from '../../services/api/plans';
@@ -78,6 +80,7 @@ export default function PatientHistoryTab({ route }: Props) {
     queryFn: () => listRegistrosByPaciente(id),
   });
 
+  const [modalVisible, setModalVisible] = useState(false);
   const [dataSessao, setDataSessao] = useState<Date>();
   const [escalaDor, setEscalaDor] = useState<number>();
   const [percepcaoEsforco, setPercepcaoEsforco] = useState<number>();
@@ -101,6 +104,7 @@ export default function PatientHistoryTab({ route }: Props) {
     setAvaliacao('');
     setProxima('');
     setPlanoId(null);
+    setModalVisible(false);
   };
 
   const toISO = (d?: Date) => (d ? d.toISOString() : undefined);
@@ -164,7 +168,13 @@ export default function PatientHistoryTab({ route }: Props) {
     setAvaliacao(r.avaliacao || '');
     setProxima(r.planoProximaSessao || '');
     setPlanoId(r.planoId);
+    setModalVisible(true);
   };
+
+  const onNew = () => {
+    resetForm(); // reseta e limpa o editingId
+    setModalVisible(true); // abre o modal vazio
+  }
 
   const handleDelete = (idRegistro: string) => {
     Alert.alert('Remover registro', 'Deseja realmente excluir este registro?', [
@@ -174,125 +184,41 @@ export default function PatientHistoryTab({ route }: Props) {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: colors.surface }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+    <View style={{ flex: 1, backgroundColor: colors.surface }}>
       <View
         style={{
           paddingHorizontal: spacing(2),
-          paddingVertical: spacing(1.25),
+          paddingVertical: spacing(1.5),
           borderBottomWidth: 1,
           borderBottomColor: colors.line,
           backgroundColor: colors.background,
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
         }}
       >
         <Text style={[typography.h1]}>Histórico</Text>
-        <Text style={{ ...typography.small, marginTop: spacing(0.5) }}>
-          Acompanhe a evolução e os registros do paciente.
-        </Text>
+        <TouchableOpacity
+          onPress={onNew}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 4,
+            backgroundColor: colors.primary,
+            paddingHorizontal: 12,
+            paddingVertical: 8,
+            borderRadius: radius.md,
+          }}
+        >
+          <MaterialCommunityIcons name="plus" size={20} color={colors.white} />
+          <Text style={{ color: colors.white, fontWeight: '700' }}>Novo</Text>
+        </TouchableOpacity>
       </View>
 
       <FlatList
         data={registrosQ.data || []}
         keyExtractor={(r) => r.id}
         contentContainerStyle={{ padding: spacing(2), gap: spacing(1.25) }}
-        ListHeaderComponent={
-          <Card style={{ gap: spacing(1.5) }}>
-            <Text style={[typography.h2]}>{editingId ? 'Editar registro' : 'Novo registro'}</Text>
-
-            <Button
-              title={formatDate(dataSessao)}
-              variant="outline"
-              onPress={() => {
-                if (Platform.OS === 'android') {
-                  DateTimePickerAndroid.open({
-                    value: dataSessao || new Date(),
-                    mode: 'date',
-                    onChange: (_, d) => d && setDataSessao(d),
-                  });
-                } else {
-                  setShowDataIOS(true);
-                }
-              }}
-            />
-
-            {Platform.OS === 'ios' && showDataIOS && (
-              <View>
-                <DateTimePicker
-                  value={dataSessao || new Date()}
-                  mode="datetime"
-                  display="inline"
-                  onChange={(_, d) => d && setDataSessao(d)}
-                />
-                <Button title="Concluir" onPress={() => setShowDataIOS(false)} />
-              </View>
-            )}
-
-            <View style={{ gap: spacing(1) }}>
-              <Text style={{ fontWeight: '600', color: colors.text }}>Plano Associado</Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing(1) }}>
-                {(planosQ.data || []).map((pl) => (
-                  <Chip
-                    key={pl.id}
-                    label={pl.objetivoGeral}
-                    active={planoId === pl.id}
-                    onPress={() => setPlanoId(pl.id)}
-                  />
-                ))}
-              </View>
-            </View>
-
-            <View>
-              <Text style={{ fontWeight: '600', marginBottom: spacing(0.75), color: colors.text }}>Escala de dor: {escalaDor ?? 0}/10</Text>
-              <Slider
-                minimumValue={0}
-                maximumValue={10}
-                step={1}
-                value={escalaDor ?? 0}
-                onValueChange={setEscalaDor}
-                minimumTrackTintColor={colors.primary}
-                thumbTintColor={colors.primary}
-              />
-            </View>
-
-            <View>
-              <Text style={{ fontWeight: '600', marginBottom: spacing(0.75), color: colors.text }}>Percepção de esforço: {percepcaoEsforco ?? 0}/10</Text>
-              <Slider
-                minimumValue={0}
-                maximumValue={10}
-                step={1}
-                value={percepcaoEsforco ?? 0}
-                onValueChange={setPercepcaoEsforco}
-                minimumTrackTintColor={colors.primary}
-                thumbTintColor={colors.primary}
-              />
-            </View>
-
-            <View style={{ gap: spacing(1) }}>
-              <Text style={{ fontWeight: '600', color: colors.text }}>Conseguiu realizar tudo?</Text>
-              <View style={{ flexDirection: 'row', gap: spacing(1) }}>
-                <Chip label="Sim" active={conseguiuTudo === true} onPress={() => setConseguiuTudo(true)} />
-                <Chip label="Não" active={conseguiuTudo === false} onPress={() => setConseguiuTudo(false)} />
-              </View>
-            </View>
-
-            <Input placeholder="Notas subjetivas (S)" value={notasSubj} onChangeText={setNotasSubj} multiline />
-            <Input placeholder="Notas objetivas (O)" value={notasObj} onChangeText={setNotasObj} multiline />
-            <Input placeholder="Avaliação (A)" value={avaliacao} onChangeText={setAvaliacao} multiline />
-            <Input placeholder="Plano para próxima sessão (P)" value={proxima} onChangeText={setProxima} multiline />
-
-            <View style={{ flexDirection: 'row', gap: spacing(1.25) }}>
-              <Button
-                title={editingId ? 'Salvar edição' : 'Adicionar registro'}
-                onPress={handleSave}
-                disabled={createMut.isPending || updateMut.isPending}
-                style={{ flex: 1 }}
-              />
-              {editingId && <Button title="Cancelar" variant="outline" onPress={resetForm} style={{ flex: 1 }} />}
-            </View>
-          </Card>
-        }
         refreshControl={
           <RefreshControl
             refreshing={!!registrosQ.isRefetching || registrosQ.isLoading}
@@ -326,6 +252,117 @@ export default function PatientHistoryTab({ route }: Props) {
           </Card>
         )}
       />
-    </KeyboardAvoidingView>
+
+      <Modal
+        visible={modalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={resetForm}
+      >
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: spacing(2) }}
+        >
+          <Card style={{ gap: spacing(1.5), maxHeight: '90%' }}>
+            <ScrollView contentContainerStyle={{ gap: spacing(1.25) }}>
+              <Text style={[typography.h2, { textAlign: 'center' }]}>
+                {editingId ? 'Editar registro' : 'Novo registro'}
+              </Text>
+
+              <Button
+                title={formatDate(dataSessao)}
+                variant="outline"
+                onPress={() => {
+                  if (Platform.OS === 'android') {
+                    DateTimePickerAndroid.open({
+                      value: dataSessao || new Date(),
+                      mode: 'date',
+                      onChange: (_, d) => d && setDataSessao(d),
+                    });
+                  } else {
+                    setShowDataIOS(true);
+                  }
+                }}
+              />
+
+              {Platform.OS === 'ios' && showDataIOS && (
+                <View>
+                  <DateTimePicker
+                    value={dataSessao || new Date()}
+                    mode="datetime"
+                    display="inline"
+                    onChange={(_, d) => d && setDataSessao(d)}
+                  />
+                  <Button title="Concluir" onPress={() => setShowDataIOS(false)} />
+                </View>
+              )}
+
+              <View style={{ gap: spacing(1) }}>
+                <Text style={{ fontWeight: '600', color: colors.text }}>Plano Associado</Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing(1) }}>
+                  {(planosQ.data || []).map((pl) => (
+                    <Chip
+                      key={pl.id}
+                      label={pl.objetivoGeral}
+                      active={planoId === pl.id}
+                      onPress={() => setPlanoId(pl.id)}
+                    />
+                  ))}
+                </View>
+              </View>
+
+              <View>
+                <Text style={{ fontWeight: '600', marginBottom: spacing(0.75), color: colors.text }}>Escala de dor: {escalaDor ?? 0}/10</Text>
+                <Slider
+                  minimumValue={0}
+                  maximumValue={10}
+                  step={1}
+                  value={escalaDor ?? 0}
+                  onValueChange={setEscalaDor}
+                  minimumTrackTintColor={colors.primary}
+                  thumbTintColor={colors.primary}
+                />
+              </View>
+
+              <View>
+                <Text style={{ fontWeight: '600', marginBottom: spacing(0.75), color: colors.text }}>Percepção de esforço: {percepcaoEsforco ?? 0}/10</Text>
+                <Slider
+                  minimumValue={0}
+                  maximumValue={10}
+                  step={1}
+                  value={percepcaoEsforco ?? 0}
+                  onValueChange={setPercepcaoEsforco}
+                  minimumTrackTintColor={colors.primary}
+                  thumbTintColor={colors.primary}
+                />
+              </View>
+
+              <View style={{ gap: spacing(1) }}>
+                <Text style={{ fontWeight: '600', color: colors.text }}>Conseguiu realizar tudo?</Text>
+                <View style={{ flexDirection: 'row', gap: spacing(1) }}>
+                  <Chip label="Sim" active={conseguiuTudo === true} onPress={() => setConseguiuTudo(true)} />
+                  <Chip label="Não" active={conseguiuTudo === false} onPress={() => setConseguiuTudo(false)} />
+                </View>
+              </View>
+
+              <Input placeholder="Notas subjetivas (S)" value={notasSubj} onChangeText={setNotasSubj} multiline />
+              <Input placeholder="Notas objetivas (O)" value={notasObj} onChangeText={setNotasObj} multiline />
+              <Input placeholder="Avaliação (A)" value={avaliacao} onChangeText={setAvaliacao} multiline />
+              <Input placeholder="Plano para próxima sessão (P)" value={proxima} onChangeText={setProxima} multiline />
+
+              <View style={{ flexDirection: 'row', gap: spacing(1.25) }}>
+                <Button
+                  title={editingId ? 'Salvar' : 'Adicionar'}
+                  onPress={handleSave}
+                  disabled={createMut.isPending || updateMut.isPending}
+                  style={{ flex: 1 }}
+                />
+                <Button title="Cancelar" variant="outline" onPress={resetForm} style={{ flex: 1 }} />
+              </View>
+            </ScrollView>
+          </Card>
+        </KeyboardAvoidingView>
+      </Modal>
+    </View>
   );
 }
