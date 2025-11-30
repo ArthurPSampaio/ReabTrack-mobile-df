@@ -105,56 +105,70 @@ export default function PatientReportTab({ route }: Props) {
           <head>
             <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
             <style>
-              /* --- CORREÇÃO AQUI: Configuração de Página --- */
-              @page { margin: 20px; } 
+              @page { margin: 0; size: A4; }
+              body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #2D3436; margin: 0; padding: 0; background: #FFF; }
               
-              body { 
-                font-family: 'Helvetica', sans-serif; 
-                color: #333; 
-                margin: 0; /* Remove margem padrão do body para usar a do @page */
-                padding: 0;
-              }
+              /* Layout de Página A4 com margens visuais internas */
+              .page-container { padding: 40px 50px; }
 
-              .container {
-                padding: 20px; /* Padding interno visual */
-              }
+              /* Cabeçalho Premium */
+              .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid ${colors.primary}; padding-bottom: 20px; margin-bottom: 30px; }
+              .brand-box { display: flex; flex-direction: column; }
+              .brand-title { font-size: 26px; font-weight: 800; color: ${colors.primary}; letter-spacing: 1px; text-transform: uppercase; margin: 0; }
+              .brand-subtitle { font-size: 11px; font-weight: 600; color: ${colors.textMuted}; letter-spacing: 3px; text-transform: uppercase; margin-top: 4px; }
+              .doc-type { font-size: 12px; font-weight: bold; color: #FFF; background-color: ${colors.primary}; padding: 6px 12px; border-radius: 4px; text-transform: uppercase; }
 
-              .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid ${colors.primary}; padding-bottom: 15px; }
-              .logo { font-size: 24px; font-weight: bold; color: ${colors.primary}; letter-spacing: 2px; }
-              .sub-logo { font-size: 12px; text-transform: uppercase; color: #666; margin-top: 5px; }
+              /* Card de Informações do Paciente */
+              .patient-card { background-color: #F8F9FA; border-left: 5px solid ${colors.primary}; padding: 20px; border-radius: 4px; margin-bottom: 35px; display: flex; flex-wrap: wrap; gap: 20px; }
+              .info-group { flex: 1; min-width: 150px; }
+              .info-label { font-size: 10px; font-weight: 700; color: #888; text-transform: uppercase; margin-bottom: 4px; }
+              .info-value { font-size: 16px; font-weight: 600; color: #2D3436; }
+
+              /* Estilização do Conteúdo Markdown */
+              .content { font-size: 14px; line-height: 1.6; color: #444; }
               
-              .patient-info { background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 30px; border: 1px solid #eee; }
-              .info-row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 14px; }
-              .label { font-weight: bold; color: #555; }
+              /* Títulos das Seções gerados pela IA */
+              h1, h2, h3 { color: ${colors.primaryDark}; margin-top: 30px; margin-bottom: 15px; font-weight: 700; }
+              h3 { font-size: 16px; border-bottom: 1px solid #EEE; padding-bottom: 8px; display: flex; align-items: center; }
+              h3::before { content: '■'; color: ${colors.primary}; font-size: 10px; margin-right: 10px; display: inline-block; transform: translateY(-2px); }
+
+              /* Tabela Gerada pela IA - Visual Profissional */
+              table { width: 100%; border-collapse: collapse; margin: 25px 0; font-size: 13px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-radius: 6px; overflow: hidden; }
+              th { background-color: ${colors.primary}; color: #FFF; text-align: left; padding: 12px 15px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+              td { padding: 12px 15px; border-bottom: 1px solid #EEE; background-color: #FFF; color: #333; font-weight: 500; }
+              tr:last-child td { border-bottom: none; }
+              tr:nth-child(even) td { background-color: #FAFAFA; }
+
+              /* Rodapé e Assinatura */
+              .signature-area { margin-top: 60px; display: flex; justify-content: flex-end; }
+              .signature-line { width: 250px; border-top: 1px solid #333; text-align: center; padding-top: 10px; font-size: 12px; font-weight: bold; color: #333; }
               
-              .content { line-height: 1.6; font-size: 14px; text-align: justify; }
-              h1, h2, h3 { color: ${colors.primaryDark}; margin-top: 25px; margin-bottom: 10px; }
-              ul { padding-left: 20px; }
-              li { margin-bottom: 6px; }
-              p { margin-bottom: 10px; }
-              
-              .footer { margin-top: 50px; text-align: center; font-size: 10px; color: #999; border-top: 1px solid #eee; padding-top: 20px; }
+              .footer { margin-top: 40px; text-align: center; font-size: 9px; color: #AAA; border-top: 1px solid #EEE; padding-top: 20px; }
             </style>
           </head>
           <body>
-            <div class="container">
+            <div class="page-container">
+              
               <div class="header">
-                <div class="logo">REABTRACK AI</div>
-                <div class="sub-logo">Relatório de Evolução Clínica</div>
+                <div class="brand-box">
+                  <h1 class="brand-title">ReabTrack</h1>
+                  <div class="brand-subtitle">Inteligência em Reabilitação</div>
+                </div>
+                <div class="doc-type">Laudo de Evolução</div>
               </div>
 
-              <div class="patient-info">
-                <div class="info-row">
-                  <span class="label">PACIENTE:</span>
-                  <span>${pacienteQ.data.nome}</span>
+              <div class="patient-card">
+                <div class="info-group">
+                  <div class="info-label">Paciente</div>
+                  <div class="info-value">${pacienteQ.data.nome}</div>
                 </div>
-                <div class="info-row">
-                  <span class="label">DIAGNÓSTICO:</span>
-                  <span>${pacienteQ.data.diagnostico}</span>
+                <div class="info-group">
+                  <div class="info-label">Diagnóstico</div>
+                  <div class="info-value">${pacienteQ.data.diagnostico}</div>
                 </div>
-                <div class="info-row">
-                  <span class="label">DATA:</span>
-                  <span>${new Date().toLocaleDateString('pt-BR')}</span>
+                <div class="info-group">
+                  <div class="info-label">Data do Relatório</div>
+                  <div class="info-value">${new Date().toLocaleDateString('pt-BR')}</div>
                 </div>
               </div>
 
@@ -162,32 +176,30 @@ export default function PatientReportTab({ route }: Props) {
                 ${htmlContent}
               </div>
 
-              <div class="footer">
-                Gerado automaticamente via ReabTrack. Documento para acompanhamento de evolução.<br/>
-                ID Paciente: ${id}
+              <div class="signature-area">
+                <div class="signature-line">
+                  Fisioterapeuta Responsável
+                </div>
               </div>
+
+              <div class="footer">
+                Documento gerado eletronicamente pelo sistema ReabTrack AI. <br/>
+                ID de Controle: ${id} • Data de Geração: ${new Date().toLocaleString('pt-BR')}
+              </div>
+
             </div>
           </body>
         </html>
       `;
 
-      const { uri } = await Print.printToFileAsync({ 
-        html,
-        // --- CORREÇÃO AQUI: Margens explícitas para o PDF ---
-        margins: {
-          left: 20,
-          top: 30,
-          right: 20,
-          bottom: 30,
-        }
-      });
-      
+      const { uri } = await Print.printToFileAsync({ html });
       await Sharing.shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf' });
 
     } catch (error: any) {
       Alert.alert('Erro ao criar PDF', error.message);
     }
   };
+
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface }}>
