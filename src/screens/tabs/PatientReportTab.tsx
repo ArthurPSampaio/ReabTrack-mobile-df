@@ -105,48 +105,41 @@ export default function PatientReportTab({ route }: Props) {
           <head>
             <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
             <style>
-              /* A CORREÇÃO DEFINITIVA: Margem no @page */
               @page { 
-                margin: 50px; /* Define a margem física do papel (todas as páginas) */
+                margin: 50px; 
                 size: A4;
               }
               
               body { 
                 font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
                 color: #2D3436; 
-                margin: 0; /* O body não precisa de margem, o @page cuida disso */
+                margin: 0; 
                 padding: 0; 
                 background: #FFF; 
               }
 
-              /* Cabeçalho Premium */
               .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid ${colors.primary}; padding-bottom: 20px; margin-bottom: 30px; }
               .brand-box { display: flex; flex-direction: column; }
               .brand-title { font-size: 26px; font-weight: 800; color: ${colors.primary}; letter-spacing: 1px; text-transform: uppercase; margin: 0; }
               .brand-subtitle { font-size: 11px; font-weight: 600; color: ${colors.textMuted}; letter-spacing: 3px; text-transform: uppercase; margin-top: 4px; }
               .doc-type { font-size: 12px; font-weight: bold; color: #FFF; background-color: ${colors.primary}; padding: 6px 12px; border-radius: 4px; text-transform: uppercase; }
 
-              /* Card de Informações */
               .patient-card { background-color: #F8F9FA; border-left: 5px solid ${colors.primary}; padding: 20px; border-radius: 4px; margin-bottom: 35px; display: flex; flex-wrap: wrap; gap: 20px; }
               .info-group { flex: 1; min-width: 150px; }
               .info-label { font-size: 10px; font-weight: 700; color: #888; text-transform: uppercase; margin-bottom: 4px; }
               .info-value { font-size: 16px; font-weight: 600; color: #2D3436; }
 
-              /* Conteúdo */
               .content { font-size: 14px; line-height: 1.6; color: #444; text-align: justify; }
               
-              /* Títulos */
               h1, h2, h3 { color: ${colors.primaryDark}; margin-top: 30px; margin-bottom: 15px; font-weight: 700; page-break-after: avoid; }
               h3 { font-size: 16px; border-bottom: 1px solid #EEE; padding-bottom: 8px; display: flex; align-items: center; }
               h3::before { content: '■'; color: ${colors.primary}; font-size: 10px; margin-right: 10px; display: inline-block; transform: translateY(-2px); }
 
-              /* Tabela */
               table { width: 100%; border-collapse: collapse; margin: 25px 0; font-size: 13px; border-radius: 6px; overflow: hidden; page-break-inside: avoid; border: 1px solid #EEE; }
               th { background-color: ${colors.primary}; color: #FFF; text-align: left; padding: 12px 15px; font-weight: 600; text-transform: uppercase; }
               td { padding: 12px 15px; border-bottom: 1px solid #EEE; background-color: #FFF; color: #333; }
               tr:nth-child(even) td { background-color: #FAFAFA; }
 
-              /* Rodapé */
               .signature-area { margin-top: 60px; display: flex; justify-content: flex-end; page-break-inside: avoid; }
               .signature-line { width: 250px; border-top: 1px solid #333; text-align: center; padding-top: 10px; font-size: 12px; font-weight: bold; color: #333; }
               
@@ -195,9 +188,7 @@ export default function PatientReportTab({ route }: Props) {
         </html>
       `;
 
-      const { uri } = await Print.printToFileAsync({ 
-        html,
-      });
+      const { uri } = await Print.printToFileAsync({ html });
       
       await Sharing.shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf' });
 
