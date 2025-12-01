@@ -98,7 +98,7 @@ export default function PatientsListScreen({ navigation }: Props) {
         <FlatList
           data={pacientes || []}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={{ gap: spacing(1.25), paddingBottom: spacing(3), flexGrow: 1 }} // flexGrow ajuda a centralizar o empty state
+          contentContainerStyle={{ gap: spacing(1.25), paddingBottom: spacing(3), flexGrow: 1 }} 
           ListEmptyComponent={
             <View style={{ alignItems: 'center', justifyContent: 'center', paddingVertical: spacing(6), gap: spacing(1.5), opacity: 0.7 }}>
               <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: colors.line, alignItems:'center', justifyContent:'center', marginBottom: 8 }}>
